@@ -1,0 +1,46 @@
+# Saída compilada
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Angular
+/.angular/cache
+.sass-cache/
+/coverage
+/connect.lock
+/libpeerconnection.log
+testem.log
+/typings
+
+# Segredos. O exemplo versionado continua.
+.env
+.env.*
+!.env.example
+
+# Editores
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.log
