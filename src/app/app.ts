@@ -30,6 +30,42 @@ interface Administrador {
   senha: string;
 }
 
+interface CategoriaDoLugar {
+  id: string;
+  slug: string;
+  parentId: string | null;
+  translations: { locale: string; name: string }[];
+}
+
+interface LugarDoPainel {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  cityId: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  websiteUrl: string | null;
+  phone: string | null;
+  status: 'active' | 'archived';
+  translations: { locale: string; name: string | null; description: string | null }[];
+  categoryIds: string[];
+  addresses: { line1: string | null; neighborhood: string | null; postalCode: string | null; cityId: string | null }[];
+  openingHours: { weekday: number; openingTime: string | null; closingTime: string | null; isClosed: boolean }[];
+  prices: { currency: string | null; priceLevel: number | null; minimumPrice: number | null; maximumPrice: number | null }[];
+  visitInformation: { recommendedDurationMinutes: number | null; bestTimeToVisit: string | null; accessibilityInformation: string | null }[];
+  externalReferences: { provider: string; externalId: string; externalUrl: string | null; providerMetadata: Record<string, unknown> | null }[];
+  media: { id: string; mediaType: string; attribution: string | null; sortOrder: number | null }[];
+}
+
+interface LugarResumo {
+  id: string;
+  slug: string;
+  name: string;
+  status: 'active' | 'archived';
+  cityName: string | null;
+}
+
 interface UsuarioDoApp {
   id: string;
   name: string;
@@ -56,7 +92,7 @@ export class App implements OnInit {
   private readonly http = inject(HttpClient);
   readonly locale = signal<Locale>('pt-BR');
   readonly token = signal(sessionStorage.getItem('painel-token') ?? '');
-  readonly tela = signal<'planos' | 'administradores' | 'usuarios'>('planos');
+  readonly tela = signal<'planos' | 'administradores' | 'usuarios' | 'lugares'>('planos');
   readonly planos = signal<Plano[]>([]);
   readonly administradores = signal<Administrador[]>([]);
   readonly erro = signal('');
@@ -75,6 +111,12 @@ export class App implements OnInit {
   filtroPais = '';
   filtroDe = '';
   filtroAte = '';
+  readonly lugares = signal<LugarResumo[]>([]);
+  readonly categorias = signal<CategoriaDoLugar[]>([]);
+  lugarForm: LugarDoPainel | null = null;
+  categoriaSlug = '';
+  categoriaNome = '';
+  origemId = '';
 
   ngOnInit(): void {
     if (this.token()) this.carregar();
@@ -124,7 +166,21 @@ export class App implements OnInit {
     this.tela.set('usuarios');
     this.editando.set(null);
     this.editandoAdmin.set(null);
+    this.lugarForm = null;
     if (this.token()) this.carregarUsuarios();
+  }
+
+  abrirLugares(): void {
+    this.erro.set('');
+    this.confirmando.set('');
+    this.tela.set('lugares');
+    this.editando.set(null);
+    this.editandoAdmin.set(null);
+    this.ficha.set(null);
+    if (this.token()) {
+      this.carregarLugares();
+      this.carregarCategorias();
+    }
   }
 
   carregar(): void {
@@ -308,6 +364,155 @@ export class App implements OnInit {
     });
   }
 
+  carregarLugares(): void {
+    const params: Record<string, string> = {};
+    if (this.busca.trim()) params['q'] = this.busca.trim();
+    this.http.get<LugarResumo[]>(`${API}/places`, { headers: this.cabecalho(), params }).subscribe({
+      next: (lista) => this.lugares.set(lista),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  carregarCategorias(): void {
+    this.http.get<CategoriaDoLugar[]>(`${API}/place-categories`, { headers: this.cabecalho() }).subscribe({
+      next: (lista) => this.categorias.set(lista),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  novoLugar(): void {
+    this.origemId = '';
+    this.lugarForm = lugarVazio();
+  }
+
+  abrirLugar(id: string): void {
+    this.http.get<LugarDoPainel>(`${API}/places/${id}`, { headers: this.cabecalho() }).subscribe({
+      next: (lugar) => {
+        this.lugarForm = lugar;
+        this.origemId = '';
+      },
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  salvarLugar(): void {
+    const lugar = this.lugarForm;
+    if (!lugar) return;
+    const corpo = {
+      slug: lugar.slug,
+      name: lugar.name,
+      description: lugar.description,
+      cityId: lugar.cityId,
+      latitude: lugar.latitude,
+      longitude: lugar.longitude,
+      websiteUrl: lugar.websiteUrl,
+      phone: lugar.phone,
+      status: lugar.status,
+      translations: lugar.translations,
+      categoryIds: lugar.categoryIds,
+      addresses: lugar.addresses,
+      openingHours: lugar.openingHours,
+      prices: lugar.prices,
+      visitInformation: lugar.visitInformation,
+      externalReferences: lugar.externalReferences,
+    };
+    const pedido = lugar.id
+      ? this.http.patch<LugarDoPainel>(`${API}/places/${lugar.id}`, corpo, { headers: this.cabecalho() })
+      : this.http.post<LugarDoPainel>(`${API}/places`, corpo, { headers: this.cabecalho() });
+    pedido.subscribe({
+      next: (gravado) => {
+        this.erro.set('');
+        this.lugarForm = gravado;
+        this.carregarLugares();
+      },
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  arquivarLugar(): void {
+    const lugar = this.lugarForm;
+    if (!lugar?.id) return;
+    this.http.post<LugarDoPainel>(`${API}/places/${lugar.id}/archive`, {}, { headers: this.cabecalho() }).subscribe({
+      next: (gravado) => {
+        this.erro.set('');
+        this.lugarForm = gravado;
+        this.carregarLugares();
+      },
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  unificarLugar(): void {
+    const lugar = this.lugarForm;
+    if (!lugar?.id || !this.origemId) return;
+    this.http.post<LugarDoPainel>(`${API}/places/${lugar.id}/merge`, { origemId: this.origemId }, { headers: this.cabecalho() }).subscribe({
+      next: (gravado) => {
+        this.erro.set('');
+        this.lugarForm = gravado;
+        this.origemId = '';
+        this.carregarLugares();
+      },
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  salvarCategoria(): void {
+    if (!this.categoriaSlug.trim() || !this.categoriaNome.trim()) return;
+    this.http
+      .post(`${API}/place-categories`, { slug: this.categoriaSlug.trim(), translations: [{ locale: 'pt-BR', name: this.categoriaNome.trim() }] }, { headers: this.cabecalho() })
+      .subscribe({
+        next: () => {
+          this.erro.set('');
+          this.categoriaSlug = '';
+          this.categoriaNome = '';
+          this.carregarCategorias();
+        },
+        error: (erro: HttpErrorResponse) => this.falha(erro),
+      });
+  }
+
+  alternarCategoria(id: string): void {
+    const lugar = this.lugarForm;
+    if (!lugar) return;
+    lugar.categoryIds = lugar.categoryIds.includes(id) ? lugar.categoryIds.filter((item) => item !== id) : [...lugar.categoryIds, id];
+  }
+
+  adicionarEndereco(): void {
+    this.lugarForm?.addresses.push({ line1: '', neighborhood: '', postalCode: '', cityId: null });
+  }
+
+  adicionarHorario(): void {
+    this.lugarForm?.openingHours.push({ weekday: 1, openingTime: '09:00', closingTime: '18:00', isClosed: false });
+  }
+
+  adicionarPreco(): void {
+    this.lugarForm?.prices.push({ currency: 'BRL', priceLevel: null, minimumPrice: null, maximumPrice: null });
+  }
+
+  adicionarVisita(): void {
+    this.lugarForm?.visitInformation.push({ recommendedDurationMinutes: null, bestTimeToVisit: '', accessibilityInformation: '' });
+  }
+
+  adicionarReferencia(): void {
+    this.lugarForm?.externalReferences.push({ provider: '', externalId: '', externalUrl: '', providerMetadata: null });
+  }
+
+  adicionarTraducao(): void {
+    this.lugarForm?.translations.push({ locale: 'pt-BR', name: '', description: '' });
+  }
+
+  enviarMidia(evento: Event): void {
+    const lugar = this.lugarForm;
+    const arquivo = (evento.target as HTMLInputElement).files?.[0];
+    if (!lugar?.id || !arquivo) return;
+    const dados = new FormData();
+    dados.set('arquivo', arquivo);
+    this.http.post(`${API}/places/${lugar.id}/media`, dados, { headers: this.cabecalho() }).subscribe({
+      next: () => this.abrirLugar(lugar.id),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
   private cabecalho(): { Authorization: string } {
     return { Authorization: `Bearer ${this.token()}` };
   }
@@ -327,10 +532,36 @@ export class App implements OnInit {
     this.planos.set([]);
     this.administradores.set([]);
     this.usuarios.set([]);
+    this.lugares.set([]);
+    this.categorias.set([]);
+    this.lugarForm = null;
     this.ficha.set(null);
     this.editando.set(null);
     this.editandoAdmin.set(null);
   }
+}
+
+function lugarVazio(): LugarDoPainel {
+  return {
+    id: '',
+    slug: '',
+    name: '',
+    description: '',
+    cityId: null,
+    latitude: null,
+    longitude: null,
+    websiteUrl: '',
+    phone: '',
+    status: 'active',
+    translations: [{ locale: 'pt-BR', name: '', description: '' }],
+    categoryIds: [],
+    addresses: [],
+    openingHours: [],
+    prices: [],
+    visitInformation: [],
+    externalReferences: [],
+    media: [],
+  };
 }
 
 function mensagem(erro: HttpErrorResponse): string {

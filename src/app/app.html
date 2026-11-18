@@ -4,6 +4,7 @@
     <button type="button" [class.ativo]="tela() === 'planos'" (click)="abrirPlanos()">{{ t('planos') }}</button>
     <button type="button" [class.ativo]="tela() === 'administradores'" (click)="abrirAdministradores()">{{ t('administradores') }}</button>
     <button type="button" [class.ativo]="tela() === 'usuarios'" (click)="abrirUsuarios()">{{ t('usuarios') }}</button>
+    <button type="button" [class.ativo]="tela() === 'lugares'" (click)="abrirLugares()">{{ t('lugares') }}</button>
     <label>
       <select [ngModel]="locale()" (ngModelChange)="locale.set($event)">
         <option value="pt-BR">pt-BR</option>
@@ -113,7 +114,7 @@
           <button class="lime" type="submit">{{ t('salvar') }}</button>
         </form>
       }
-    } @else {
+    } @else if (tela() === 'usuarios') {
       <div class="row">
         <h1>{{ t('usuarios') }}</h1>
         <button class="ghost" type="button" (click)="sair()">{{ t('sair') }}</button>
@@ -180,6 +181,115 @@
             }
           </div>
         </section>
+      }
+    } @else if (tela() === 'lugares') {
+      <div class="row">
+        <h1>{{ t('lugares') }}</h1>
+        <div>
+          <button class="lime" type="button" (click)="novoLugar()">{{ t('novoLugar') }}</button>
+          <button class="ghost" type="button" (click)="sair()">{{ t('sair') }}</button>
+        </div>
+      </div>
+      <form class="filtros" (ngSubmit)="carregarLugares()">
+        <label>{{ t('buscar') }} <input name="buscaLugar" [(ngModel)]="busca" /></label>
+        <button class="pri" type="submit">{{ t('buscar') }}</button>
+      </form>
+      <form class="filtros" (ngSubmit)="salvarCategoria()">
+        <label>{{ t('novaCategoria') }} <input name="categoriaSlug" [(ngModel)]="categoriaSlug" [placeholder]="t('slug')" /></label>
+        <label>{{ t('nome') }} <input name="categoriaNome" [(ngModel)]="categoriaNome" /></label>
+        <button class="ghost" type="submit">{{ t('salvar') }}</button>
+      </form>
+      @if (erro()) { <p class="erro">{{ erro() }}</p> }
+      @for (lugar of lugares(); track lugar.id) {
+        <article class="card">
+          <div class="row">
+            <div>
+              <h2>{{ lugar.name }}</h2>
+              <p class="mut">{{ lugar.slug }} · {{ lugar.cityName || '—' }} · {{ lugar.status === 'active' ? t('ativo') : t('arquivado') }}</p>
+            </div>
+            <button class="ghost" type="button" (click)="abrirLugar(lugar.id)">{{ t('ficha') }}</button>
+          </div>
+        </article>
+      }
+      @if (lugarForm) {
+        <form class="card" (ngSubmit)="salvarLugar()">
+          <h2>{{ lugarForm.name || t('novoLugar') }}</h2>
+          <label>{{ t('nome') }} <input name="nomeLugar" [(ngModel)]="lugarForm.name" /></label>
+          <label>{{ t('slug') }} <input name="slugLugar" [(ngModel)]="lugarForm.slug" /></label>
+          <label>{{ t('descricao') }} <textarea name="descricaoLugar" [(ngModel)]="lugarForm.description"></textarea></label>
+          <label>{{ t('site') }} <input name="siteLugar" [(ngModel)]="lugarForm.websiteUrl" /></label>
+          <label>{{ t('telefone') }} <input name="telefoneLugar" [(ngModel)]="lugarForm.phone" /></label>
+          <label>{{ t('categoria') }}
+            @for (categoria of categorias(); track categoria.id) {
+              <span>
+                <input type="checkbox" [name]="'cat' + categoria.id" [checked]="lugarForm.categoryIds.includes(categoria.id)" (change)="alternarCategoria(categoria.id)" />
+                {{ categoria.translations[0]?.name || categoria.slug }}
+              </span>
+            }
+          </label>
+          @for (traducao of lugarForm.translations; track $index) {
+            <label>{{ t('traducao') }}
+              <select [name]="'idioma' + $index" [(ngModel)]="traducao.locale">
+                <option value="pt-BR">pt-BR</option>
+                <option value="pt-PT">pt-PT</option>
+                <option value="en">en</option>
+                <option value="es">es</option>
+              </select>
+              <input [name]="'tradNome' + $index" [(ngModel)]="traducao.name" />
+            </label>
+          }
+          <button class="ghost" type="button" (click)="adicionarTraducao()">{{ t('traducao') }}</button>
+          @for (endereco of lugarForm.addresses; track $index) {
+            <label>{{ t('rua') }} <input [name]="'rua' + $index" [(ngModel)]="endereco.line1" /></label>
+            <label>{{ t('bairro') }} <input [name]="'bairro' + $index" [(ngModel)]="endereco.neighborhood" /></label>
+          }
+          <button class="ghost" type="button" (click)="adicionarEndereco()">{{ t('bairro') }}</button>
+          @for (horario of lugarForm.openingHours; track $index) {
+            <label>{{ t('abre') }} <input [name]="'abre' + $index" [(ngModel)]="horario.openingTime" /></label>
+            <label>{{ t('fecha') }} <input [name]="'fecha' + $index" [(ngModel)]="horario.closingTime" /></label>
+            <label>{{ t('fechado') }} <input type="checkbox" [name]="'fechado' + $index" [(ngModel)]="horario.isClosed" /></label>
+          }
+          <button class="ghost" type="button" (click)="adicionarHorario()">{{ t('abre') }}</button>
+          @for (preco of lugarForm.prices; track $index) {
+            <label>{{ t('moeda') }} <input [name]="'moedaLugar' + $index" [(ngModel)]="preco.currency" /></label>
+            <label>{{ t('preco') }} <input [name]="'minimo' + $index" type="number" [(ngModel)]="preco.minimumPrice" /></label>
+            <label>{{ t('preco') }} <input [name]="'maximo' + $index" type="number" [(ngModel)]="preco.maximumPrice" /></label>
+          }
+          <button class="ghost" type="button" (click)="adicionarPreco()">{{ t('preco') }}</button>
+          @for (visita of lugarForm.visitInformation; track $index) {
+            <label>{{ t('duracaoMin') }} <input [name]="'duracao' + $index" type="number" [(ngModel)]="visita.recommendedDurationMinutes" /></label>
+            <label>{{ t('melhorHorario') }} <input [name]="'melhor' + $index" [(ngModel)]="visita.bestTimeToVisit" /></label>
+            <label>{{ t('acessibilidade') }} <input [name]="'acesso' + $index" [(ngModel)]="visita.accessibilityInformation" /></label>
+          }
+          <button class="ghost" type="button" (click)="adicionarVisita()">{{ t('duracaoMin') }}</button>
+          @for (referencia of lugarForm.externalReferences; track $index) {
+            <label>{{ t('provedor') }} <input [name]="'provedor' + $index" [(ngModel)]="referencia.provider" /></label>
+            <label>{{ t('idExterno') }} <input [name]="'externo' + $index" [(ngModel)]="referencia.externalId" /></label>
+            <label>{{ t('url') }} <input [name]="'url' + $index" [(ngModel)]="referencia.externalUrl" /></label>
+          }
+          <button class="ghost" type="button" (click)="adicionarReferencia()">{{ t('provedor') }}</button>
+          <div class="row">
+            <button class="pri" type="submit">{{ t('salvar') }}</button>
+            @if (lugarForm.id) {
+              <button class="ghost" type="button" (click)="arquivarLugar()">{{ t('arquivar') }}</button>
+            }
+          </div>
+        </form>
+        @if (lugarForm.id) {
+          <section class="card">
+            <label>{{ t('unificar') }}
+              <select name="origem" [(ngModel)]="origemId">
+                <option value="">—</option>
+                @for (outro of lugares(); track outro.id) {
+                  @if (outro.id !== lugarForm.id) { <option [value]="outro.id">{{ outro.name }}</option> }
+                }
+              </select>
+            </label>
+            <button class="ghost" type="button" (click)="unificarLugar()">{{ t('unificar') }}</button>
+            <p class="mut">{{ t('midia') }}: @for (item of lugarForm.media; track item.id) { {{ item.mediaType }} {{ item.attribution }} }</p>
+            <label>{{ t('midia') }} <input name="midia" type="file" (change)="enviarMidia($event)" /></label>
+          </section>
+        }
       }
     }
   </main>
