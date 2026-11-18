@@ -1,0 +1,81 @@
+<div class="shell">
+  <nav>
+    <strong>{{ t('marca') }}</strong>
+    <button type="button">{{ t('planos') }}</button>
+    <label>
+      <select [ngModel]="locale()" (ngModelChange)="locale.set($event)">
+        <option value="pt-BR">pt-BR</option>
+        <option value="pt-PT">pt-PT</option>
+        <option value="en">en</option>
+        <option value="es">es</option>
+      </select>
+    </label>
+  </nav>
+  <main>
+    @if (!token()) {
+      <form class="entrar card" (ngSubmit)="entrar()">
+        <h1>{{ t('entrar') }}</h1>
+        <label>{{ t('email') }} <input name="email" [(ngModel)]="email" autocomplete="username" /></label>
+        <label>{{ t('senha') }} <input name="senha" type="password" [(ngModel)]="senha" autocomplete="current-password" /></label>
+        <button class="pri" type="submit">{{ t('entrar') }}</button>
+        @if (erro()) { <p class="erro">{{ erro() }}</p> }
+      </form>
+    } @else {
+      <div class="row">
+        <h1>{{ t('planos') }}</h1>
+        <div>
+          <button class="lime" type="button" (click)="novo()">{{ t('novo') }}</button>
+          <button class="ghost" type="button" (click)="sair()">{{ t('sair') }}</button>
+        </div>
+      </div>
+      @if (erro()) { <p class="erro">{{ erro() }}</p> }
+      @for (plano of planos(); track plano.id) {
+        <article class="card">
+          <div class="row">
+            <div>
+              <h2>{{ plano.name }}</h2>
+              <p class="mut">{{ plano.code }} · {{ plano.isActive ? t('ativo') : t('inativo') }}@if (plano.isFree) { · {{ t('gratuito') }} }</p>
+              <p class="mut">@if (plano.preco) { {{ plano.preco.currency }} {{ plano.preco.amount }} · {{ plano.preco.billingPeriod }} }</p>
+            </div>
+            <div>
+              <button class="ghost" type="button" (click)="abrir(plano)">{{ t('editar') }}</button>
+              @if (!plano.isFree) {
+                <button class="pri" type="button" (click)="ativar(plano, !plano.isActive)">{{ plano.isActive ? t('desativar') : t('ativar') }}</button>
+              }
+            </div>
+          </div>
+        </article>
+      }
+      @if (editando(); as plano) {
+        <form class="card" (ngSubmit)="salvar(plano)">
+          <h2>{{ plano.id ? plano.name : t('novo') }}</h2>
+          <label>{{ t('codigo') }} <input name="code" [(ngModel)]="plano.code" [disabled]="!!plano.id" /></label>
+          <label>{{ t('nome') }} <input name="name" [(ngModel)]="plano.name" /></label>
+          <label>{{ t('descricao') }} <textarea name="description" [(ngModel)]="plano.description"></textarea></label>
+          <label>{{ t('gratuito') }} <input name="isFree" type="checkbox" [(ngModel)]="plano.isFree" [disabled]="plano.isFree && !!plano.id" /></label>
+          @if (!plano.isFree && plano.preco) {
+            <label>{{ t('moeda') }} <input name="currency" [(ngModel)]="plano.preco.currency" maxlength="3" /></label>
+            <label>{{ t('preco') }} <input name="amount" type="number" [(ngModel)]="plano.preco.amount" /></label>
+            <label>{{ t('ciclo') }}
+              <select name="ciclo" [(ngModel)]="plano.preco.billingPeriod">
+                <option value="monthly">{{ t('mensal') }}</option>
+                <option value="yearly">{{ t('anual') }}</option>
+              </select>
+            </label>
+            <label>{{ t('dias') }} <input name="dias" type="number" [(ngModel)]="plano.preco.durationDays" /></label>
+          }
+          @for (feature of plano.features; track $index) {
+            <div class="row">
+              <label>{{ t('feature') }} <input [name]="'fk' + $index" [(ngModel)]="feature.key" /></label>
+              <label>{{ t('valor') }} <input [name]="'fv' + $index" [(ngModel)]="feature.value" /></label>
+            </div>
+          }
+          <div class="row">
+            <button class="ghost" type="button" (click)="adicionarFeature(plano)">{{ t('adicionar') }}</button>
+            <button class="lime" type="submit">{{ t('salvar') }}</button>
+          </div>
+        </form>
+      }
+    }
+  </main>
+</div>
