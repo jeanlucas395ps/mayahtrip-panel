@@ -114,6 +114,88 @@ interface UsuarioDoApp {
   entrada: 'google' | 'senha' | 'ambos';
 }
 
+interface ResumoPainel {
+  totals: { trips: number; users: number; admins: number; itineraries: number; agents: number };
+  users: { day: string; total: number }[];
+  trips: { day: string; total: number }[];
+  acquisitions: { free: number; pro: number };
+  activePro: number;
+  queues: { itinerary: ContagemFila; notification: ContagemFila; ingestion: ContagemFila };
+  workers: { itinerary: string; notification: string; ingestion: string };
+}
+
+interface ContagemFila {
+  pending: number;
+  processing: number;
+  failed: number;
+}
+
+interface FinanceiroPainel {
+  currencies: { currency: string; paid: number; pending: number; refunded: number; net: number }[];
+  subscriptions: { status: string; total: number }[];
+  months: { currency: string; month: number; total: number; projected: boolean }[];
+}
+
+interface FontePainel {
+  id: string;
+  name: string;
+  isActive: boolean;
+  canStore: boolean;
+  canRepublish: boolean;
+  licenseLabel: string;
+}
+
+interface ItemHub {
+  id: string;
+  title: string | null;
+  status: string;
+  sourceName: string;
+  placeId: string | null;
+  publicationId: string | null;
+}
+
+interface FilasPainel {
+  workers: { itinerary: string; notification: string; ingestion: string };
+  itinerary: ContagemFila & { jobs: JobFila[] };
+  notification: ContagemFila & { jobs: JobFila[] };
+  ingestion: ContagemFila & { jobs: JobFila[] };
+}
+
+interface JobFila {
+  id: string;
+  status: string;
+  createdAt: string;
+}
+
+interface CorridaPainel {
+  id: string;
+  status: string;
+  finishedAt: string | null;
+  result: { expired?: number } | null;
+}
+
+interface AjustePainel {
+  key: string;
+  value: number;
+  description: string;
+  min: number;
+  max: number;
+}
+
+interface BandeiraPainel {
+  id: string;
+  flagKey: string;
+  description: string | null;
+  isEnabled: boolean;
+}
+
+interface SaudePainel {
+  services: { name: string; status: string; detail: string | null }[];
+  host: { cpu: number | null; memory: number | null; disk: number | null };
+  integrationFailures: { id: string; provider: string; operation: string; createdAt: string }[];
+  apiErrors: unknown[];
+}
+
 @Component({
   selector: 'app-root',
   imports: [FormsModule],
@@ -123,7 +205,7 @@ export class App implements OnInit {
   private readonly http = inject(HttpClient);
   readonly locale = signal<Locale>('pt-BR');
   readonly token = signal(sessionStorage.getItem('painel-token') ?? '');
-  readonly tela = signal<'planos' | 'administradores' | 'usuarios' | 'lugares' | 'viagens' | 'mala' | 'denuncias' | 'publicacoes' | 'cupons' | 'pro' | 'maya' | 'pagamentos' | 'assinaturas' | 'estorno' | 'metodos' | 'logs'>('planos');
+  readonly tela = signal<'planos' | 'administradores' | 'usuarios' | 'lugares' | 'viagens' | 'mala' | 'denuncias' | 'publicacoes' | 'cupons' | 'pro' | 'maya' | 'pagamentos' | 'assinaturas' | 'estorno' | 'metodos' | 'logs' | 'inicio' | 'financeiro' | 'hub' | 'filas' | 'expiracao' | 'ajustes' | 'saude'>('planos');
   readonly planos = signal<Plano[]>([]);
   readonly administradores = signal<Administrador[]>([]);
   readonly erro = signal('');
@@ -178,6 +260,24 @@ export class App implements OnInit {
   readonly metodos = signal<MetodoPainel[]>([]);
   readonly chamadas = signal<LogPainel[]>([]);
   readonly webhooks = signal<EventoPainel[]>([]);
+  readonly resumo = signal<ResumoPainel | null>(null);
+  readonly financeiro = signal<FinanceiroPainel | null>(null);
+  readonly fontes = signal<FontePainel[]>([]);
+  readonly itensHub = signal<ItemHub[]>([]);
+  readonly filasPainel = signal<FilasPainel | null>(null);
+  readonly corridas = signal<CorridaPainel[]>([]);
+  readonly ajustes = signal<AjustePainel[]>([]);
+  readonly bandeiras = signal<BandeiraPainel[]>([]);
+  readonly saude = signal<SaudePainel | null>(null);
+  periodoDe = new Date().toISOString().slice(0, 10);
+  periodoAte = new Date().toISOString().slice(0, 10);
+  anoPainel = new Date().getFullYear();
+  coletaTitulo = '';
+  coletaUrl = '';
+  fonteId = '';
+  lugarAssociado = '';
+  licencaNome = '';
+  bandeiraChave = '';
   cupomCodigo = '';
   cupomDias = 30;
   cupomValidade = '';
@@ -1055,7 +1155,239 @@ export class App implements OnInit {
     return this.t('pix');
   }
 
-  private preparar(tela: 'cupons' | 'pro' | 'maya' | 'pagamentos' | 'assinaturas' | 'estorno' | 'metodos' | 'logs'): void {
+  abrirInicio(): void {
+    this.preparar('inicio');
+    if (this.token()) this.carregarResumo();
+  }
+
+  carregarResumo(): void {
+    this.http.get<ResumoPainel>(`${API}/platform/dashboard`, { headers: this.cabecalho(), params: { from: this.periodoDe, to: this.periodoAte, year: String(this.anoPainel) } }).subscribe({
+      next: (resumo) => this.resumo.set(resumo),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  abrirFinanceiro(): void {
+    this.preparar('financeiro');
+    if (this.token()) this.carregarFinanceiro();
+  }
+
+  carregarFinanceiro(): void {
+    this.http.get<FinanceiroPainel>(`${API}/platform/finance`, { headers: this.cabecalho(), params: { year: String(this.anoPainel) } }).subscribe({
+      next: (financeiro) => this.financeiro.set(financeiro),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  abrirHub(): void {
+    this.preparar('hub');
+    if (this.token()) this.carregarHub();
+  }
+
+  carregarHub(): void {
+    this.http.get<FontePainel[]>(`${API}/ingestion/sources`, { headers: this.cabecalho() }).subscribe({
+      next: (lista) => {
+        this.fontes.set(lista);
+        if (!this.fonteId && lista[0]) this.fonteId = lista[0].id;
+      },
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+    this.http.get<ItemHub[]>(`${API}/ingestion/items`, { headers: this.cabecalho() }).subscribe({
+      next: (lista) => this.itensHub.set(lista),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  ativarFonte(fonte: FontePainel, isActive: boolean): void {
+    this.http.post(`${API}/ingestion/sources/${fonte.id}/active`, { isActive }, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarHub(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  coletar(): void {
+    this.http.post(`${API}/ingestion/jobs`, {
+      sourceId: this.fonteId,
+      externalId: `painel-${Date.now()}`,
+      title: this.coletaTitulo.trim(),
+      originalUrl: this.coletaUrl.trim() || null,
+      mediaUrl: this.coletaUrl.trim() || null,
+      mediaType: 'image',
+      licenseName: this.licencaNome.trim() || 'unknown',
+    }, { headers: this.cabecalho() }).subscribe({
+      next: () => {
+        this.coletaTitulo = '';
+        this.coletaUrl = '';
+        this.carregarHub();
+      },
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  julgarItem(item: ItemHub, decision: 'approved' | 'rejected' | 'edited' | 'escalated'): void {
+    this.http.patch(`${API}/ingestion/items/${item.id}/status`, { status: 'pending_review' }, { headers: this.cabecalho() }).subscribe({
+      next: () => {
+        this.http.post<{ id: string }>(`${API}/content-reviews`, { ingestionItemId: item.id }, { headers: this.cabecalho() }).subscribe({
+          next: (tarefa) => {
+            this.http.post(`${API}/content-reviews/${tarefa.id}/decisions`, { decision }, { headers: this.cabecalho() }).subscribe({
+              next: () => this.carregarHub(),
+              error: (erro: HttpErrorResponse) => this.falha(erro),
+            });
+          },
+          error: (erro: HttpErrorResponse) => this.falha(erro),
+        });
+      },
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  associarItem(item: ItemHub): void {
+    this.http.post(`${API}/ingestion/items/${item.id}/place`, { placeId: this.lugarAssociado.trim() }, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarHub(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  reavaliarLicenca(item: ItemHub): void {
+    this.http.post(`${API}/ingestion/items/${item.id}/license`, { licenseName: this.licencaNome.trim() || 'unknown' }, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarHub(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  pedirRemocaoItem(item: ItemHub): void {
+    this.http.post(`${API}/ingestion/items/${item.id}/removal-requests`, { reason: this.licencaNome.trim() || null }, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarHub(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  abrirFilas(): void {
+    this.preparar('filas');
+    if (this.token()) this.carregarFilas();
+  }
+
+  carregarFilas(): void {
+    this.http.get<FilasPainel>(`${API}/platform/queues`, { headers: this.cabecalho() }).subscribe({
+      next: (filas) => this.filasPainel.set(filas),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  limparFila(fila: string, scope: 'pending' | 'processing'): void {
+    this.http.post(`${API}/platform/queues/${fila}/clear`, { scope }, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarFilas(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  recolocarFila(fila: string): void {
+    this.http.post(`${API}/platform/queues/${fila}/requeue-failed`, {}, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarFilas(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  esvaziarFila(fila: string): void {
+    this.http.post(`${API}/platform/queues/${fila}/empty-failed`, {}, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarFilas(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  agirNoJob(fila: string, id: string, acao: 'requeue' | 'delete' | 'fail'): void {
+    const caminho = acao === 'fail' ? `${API}/platform/queues/itinerary/jobs/${id}/fail` : `${API}/platform/queues/${fila}/jobs/${id}/${acao}`;
+    this.http.post(caminho, {}, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarFilas(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  abrirExpiracao(): void {
+    this.preparar('expiracao');
+    if (this.token()) this.carregarCorridas();
+  }
+
+  carregarCorridas(): void {
+    this.http.get<CorridaPainel[]>(`${API}/platform/subscription-expiry`, { headers: this.cabecalho() }).subscribe({
+      next: (lista) => this.corridas.set(lista),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  expirarAgora(): void {
+    this.http.post(`${API}/platform/subscription-expiry`, {}, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarCorridas(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  abrirAjustes(): void {
+    this.preparar('ajustes');
+    if (this.token()) this.carregarAjustes();
+  }
+
+  carregarAjustes(): void {
+    this.http.get<AjustePainel[]>(`${API}/platform/settings`, { headers: this.cabecalho() }).subscribe({
+      next: (lista) => this.ajustes.set(lista.map((ajuste) => ({ ...ajuste }))),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+    this.http.get<BandeiraPainel[]>(`${API}/platform/flags`, { headers: this.cabecalho() }).subscribe({
+      next: (lista) => this.bandeiras.set(lista),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  salvarAjuste(ajuste: AjustePainel): void {
+    this.http.patch(`${API}/platform/settings`, { key: ajuste.key, value: Number(ajuste.value) }, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarAjustes(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  criarBandeira(): void {
+    this.http.post(`${API}/platform/flags`, { flagKey: this.bandeiraChave.trim() }, { headers: this.cabecalho() }).subscribe({
+      next: () => {
+        this.bandeiraChave = '';
+        this.carregarAjustes();
+      },
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  alternarBandeira(bandeira: BandeiraPainel): void {
+    this.http.post(`${API}/platform/flags/${bandeira.id}/toggle`, {}, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarAjustes(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  abrirSaude(): void {
+    this.preparar('saude');
+    if (this.token()) this.carregarSaude();
+  }
+
+  carregarSaude(): void {
+    this.http.get<SaudePainel>(`${API}/platform/health`, { headers: this.cabecalho() }).subscribe({
+      next: (saude) => this.saude.set(saude),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  largura(total: number, serie: { total: number }[]): number {
+    const maximo = Math.max(1, ...serie.map((ponto) => ponto.total));
+    return Math.round((total / maximo) * 100);
+  }
+
+  filasDaTela(): { chave: 'itinerary' | 'notification' | 'ingestion'; nome: string }[] {
+    return [
+      { chave: 'itinerary', nome: 'Roteiro' },
+      { chave: 'notification', nome: 'Aviso' },
+      { chave: 'ingestion', nome: 'Conteúdo' },
+    ];
+  }
+
+  private preparar(tela: 'cupons' | 'pro' | 'maya' | 'pagamentos' | 'assinaturas' | 'estorno' | 'metodos' | 'logs' | 'inicio' | 'financeiro' | 'hub' | 'filas' | 'expiracao' | 'ajustes' | 'saude'): void {
     this.erro.set('');
     this.tela.set(tela);
     this.editando.set(null);

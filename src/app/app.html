@@ -17,6 +17,13 @@
     <button type="button" [class.ativo]="tela() === 'estorno'" (click)="abrirEstorno()">{{ t('estorno') }}</button>
     <button type="button" [class.ativo]="tela() === 'metodos'" (click)="abrirMetodos()">{{ t('metodos') }}</button>
     <button type="button" [class.ativo]="tela() === 'logs'" (click)="abrirLogs()">{{ t('logs') }}</button>
+    <button type="button" [class.ativo]="tela() === 'inicio'" (click)="abrirInicio()">{{ t('inicio') }}</button>
+    <button type="button" [class.ativo]="tela() === 'financeiro'" (click)="abrirFinanceiro()">{{ t('financeiro') }}</button>
+    <button type="button" [class.ativo]="tela() === 'hub'" (click)="abrirHub()">{{ t('hub') }}</button>
+    <button type="button" [class.ativo]="tela() === 'filas'" (click)="abrirFilas()">{{ t('filas') }}</button>
+    <button type="button" [class.ativo]="tela() === 'expiracao'" (click)="abrirExpiracao()">{{ t('expiracao') }}</button>
+    <button type="button" [class.ativo]="tela() === 'ajustes'" (click)="abrirAjustes()">{{ t('ajustes') }}</button>
+    <button type="button" [class.ativo]="tela() === 'saude'" (click)="abrirSaude()">{{ t('saude') }}</button>
     <label>
       <select [ngModel]="locale()" (ngModelChange)="locale.set($event)">
         <option value="pt-BR">pt-BR</option>
@@ -618,6 +625,165 @@
       <h2>{{ t('webhooks') }}</h2>
       @for (evento of webhooks(); track evento.id) {
         <article class="card"><p>{{ evento.createdAt }} · {{ evento.eventType }}@if (evento.providerEventId) { · {{ evento.providerEventId }} }</p></article>
+      }
+    } @else if (tela() === 'inicio') {
+      <div class="row"><h1>{{ t('inicio') }}</h1><button class="ghost" type="button" (click)="sair()">{{ t('sair') }}</button></div>
+      @if (erro()) { <p class="erro">{{ erro() }}</p> }
+      <form class="card filtros" (ngSubmit)="carregarResumo()">
+        <label>{{ t('dePeriodo') }} <input name="periodoDe" type="date" [(ngModel)]="periodoDe" /></label>
+        <label>{{ t('atePeriodo') }} <input name="periodoAte" type="date" [(ngModel)]="periodoAte" /></label>
+        <label>{{ t('ano') }} <input name="anoPainel" type="number" [(ngModel)]="anoPainel" /></label>
+        <button class="pri" type="submit">{{ t('buscar') }}</button>
+      </form>
+      @if (resumo(); as painel) {
+        <p>{{ t('viagens') }} {{ painel.totals.trips }} · {{ t('usuarios') }} {{ painel.totals.users }} · {{ t('administradores') }} {{ painel.totals.admins }} · {{ t('roteirosTotal') }} {{ painel.totals.itineraries }} · {{ t('agentesTotal') }} {{ painel.totals.agents }}</p>
+        <p>{{ t('aquisicoes') }} Free {{ painel.acquisitions.free }} · PRO {{ painel.acquisitions.pro }} · {{ t('proAtivo') }} {{ painel.activePro }}</p>
+        @if (painel.workers.itinerary === 'parado') { <p class="erro">{{ t('trabalhadorParado') }}</p> }
+        <h2>{{ t('usuarios') }}</h2>
+        @for (ponto of painel.users; track ponto.day) {
+          <p>{{ ponto.day }} {{ ponto.total }}</p>
+          <div class="barra" [style.width.%]="largura(ponto.total, painel.users)"></div>
+        }
+        <h2>{{ t('viagens') }}</h2>
+        @for (ponto of painel.trips; track ponto.day) {
+          <p>{{ ponto.day }} {{ ponto.total }}</p>
+          <div class="barra" [style.width.%]="largura(ponto.total, painel.trips)"></div>
+        }
+      }
+    } @else if (tela() === 'financeiro') {
+      <div class="row"><h1>{{ t('financeiro') }}</h1><button class="ghost" type="button" (click)="sair()">{{ t('sair') }}</button></div>
+      @if (erro()) { <p class="erro">{{ erro() }}</p> }
+      <form class="card" (ngSubmit)="carregarFinanceiro()">
+        <label>{{ t('ano') }} <input name="anoFinanceiro" type="number" [(ngModel)]="anoPainel" /></label>
+        <button class="pri" type="submit">{{ t('buscar') }}</button>
+      </form>
+      @if (financeiro(); as caixa) {
+        @for (moeda of caixa.currencies; track moeda.currency) {
+          <article class="card">
+            <h2>{{ moeda.currency }}</h2>
+            <p>{{ t('pagos') }} {{ moeda.paid }} · {{ t('pendentes') }} {{ moeda.pending }} · {{ t('estornados') }} {{ moeda.refunded }} · {{ t('liquido') }} {{ moeda.net }}</p>
+          </article>
+        }
+        @for (assinatura of caixa.subscriptions; track assinatura.status) {
+          <p>{{ assinatura.status }} {{ assinatura.total }}</p>
+        }
+        @for (mes of caixa.months; track mes.currency + mes.month) {
+          <p>{{ mes.month }} {{ mes.currency }} {{ mes.total }}@if (mes.projected) { · {{ t('projecao') }} }</p>
+          <div class="barra" [style.width.%]="largura(mes.total, caixa.months)"></div>
+        }
+      }
+    } @else if (tela() === 'hub') {
+      <div class="row"><h1>{{ t('hub') }}</h1><button class="ghost" type="button" (click)="sair()">{{ t('sair') }}</button></div>
+      @if (erro()) { <p class="erro">{{ erro() }}</p> }
+      @for (fonte of fontes(); track fonte.id) {
+        <article class="card">
+          <div class="row">
+            <div>
+              <h2>{{ fonte.name }}</h2>
+              <p class="mut">{{ fonte.isActive ? t('ativo') : t('inativo') }} · {{ fonte.licenseLabel }} · {{ fonte.canStore ? t('ativo') : t('bloqueado') }}</p>
+            </div>
+            <button class="ghost" type="button" (click)="ativarFonte(fonte, !fonte.isActive)">{{ fonte.isActive ? t('desativar') : t('ativar') }}</button>
+          </div>
+        </article>
+      }
+      <form class="card" (ngSubmit)="coletar()">
+        <label>{{ t('fontes') }}
+          <select name="fonteId" [(ngModel)]="fonteId">
+            @for (fonte of fontes(); track fonte.id) { <option [value]="fonte.id">{{ fonte.name }}</option> }
+          </select>
+        </label>
+        <label>{{ t('tituloItem') }} <input name="coletaTitulo" [(ngModel)]="coletaTitulo" /></label>
+        <label>{{ t('urlItem') }} <input name="coletaUrl" [(ngModel)]="coletaUrl" /></label>
+        <label>{{ t('licenca') }} <input name="licencaNome" [(ngModel)]="licencaNome" /></label>
+        <label>{{ t('associar') }} <input name="lugarAssociado" [(ngModel)]="lugarAssociado" /></label>
+        <button class="pri" type="submit">{{ t('coletar') }}</button>
+      </form>
+      @for (item of itensHub(); track item.id) {
+        <article class="card">
+          <h2>{{ item.title }}</h2>
+          <p class="mut">{{ item.sourceName }} · {{ item.status }}</p>
+          <div class="row">
+            <button class="ghost" type="button" (click)="julgarItem(item, 'approved')">{{ t('aprovar') }}</button>
+            <button class="ghost" type="button" (click)="julgarItem(item, 'rejected')">{{ t('rejeitarItem') }}</button>
+            <button class="ghost" type="button" (click)="julgarItem(item, 'edited')">{{ t('corrigir') }}</button>
+            <button class="ghost" type="button" (click)="julgarItem(item, 'escalated')">{{ t('encaminhar') }}</button>
+            <button class="ghost" type="button" (click)="associarItem(item)">{{ t('associar') }}</button>
+            <button class="ghost" type="button" (click)="reavaliarLicenca(item)">{{ t('licenca') }}</button>
+            <button class="ghost" type="button" (click)="pedirRemocaoItem(item)">{{ t('pedirRemocao') }}</button>
+          </div>
+        </article>
+      }
+    } @else if (tela() === 'filas') {
+      <div class="row"><h1>{{ t('filas') }}</h1><button class="ghost" type="button" (click)="sair()">{{ t('sair') }}</button></div>
+      @if (erro()) { <p class="erro">{{ erro() }}</p> }
+      @if (filasPainel(); as quadro) {
+        @if (quadro.workers.itinerary === 'parado') { <p class="erro">{{ t('trabalhadorParado') }}</p> }
+        @for (fila of filasDaTela(); track fila.chave) {
+          <article class="card">
+            <h2>{{ fila.nome }}</h2>
+            <p>{{ t('pendentes') }} {{ quadro[fila.chave].pending }} · {{ t('processando') }} {{ quadro[fila.chave].processing }} · {{ t('falhos') }} {{ quadro[fila.chave].failed }}</p>
+            <div class="row">
+              <button class="ghost" type="button" (click)="limparFila(fila.chave, 'pending')">{{ t('limparPendentes') }}</button>
+              <button class="ghost" type="button" (click)="limparFila(fila.chave, 'processing')">{{ t('limparProcessando') }}</button>
+              <button class="ghost" type="button" (click)="recolocarFila(fila.chave)">{{ t('recolocar') }}</button>
+              <button class="ghost" type="button" (click)="esvaziarFila(fila.chave)">{{ t('esvaziar') }}</button>
+            </div>
+            @for (job of quadro[fila.chave].jobs; track job.id) {
+              <div class="row">
+                <p class="mut">{{ job.status }} · {{ job.createdAt }}</p>
+                @if (job.status === 'failed') {
+                  <button class="ghost" type="button" (click)="agirNoJob(fila.chave, job.id, 'requeue')">{{ t('recolocar') }}</button>
+                  <button class="ghost" type="button" (click)="agirNoJob(fila.chave, job.id, 'delete')">{{ t('excluir') }}</button>
+                }
+                @if (fila.chave === 'itinerary' && (job.status === 'pending' || job.status === 'processing')) {
+                  <button class="ghost" type="button" (click)="agirNoJob(fila.chave, job.id, 'fail')">{{ t('marcarFalha') }}</button>
+                }
+              </div>
+            }
+          </article>
+        }
+      }
+    } @else if (tela() === 'expiracao') {
+      <div class="row"><h1>{{ t('expiracao') }}</h1><button class="ghost" type="button" (click)="sair()">{{ t('sair') }}</button></div>
+      @if (erro()) { <p class="erro">{{ erro() }}</p> }
+      <button class="pri" type="button" (click)="expirarAgora()">{{ t('expirar') }}</button>
+      @for (corrida of corridas(); track corrida.id) {
+        <article class="card"><p>{{ corrida.finishedAt }} · {{ corrida.status }} · {{ corrida.result?.expired ?? 0 }}</p></article>
+      }
+    } @else if (tela() === 'ajustes') {
+      <div class="row"><h1>{{ t('ajustes') }}</h1><button class="ghost" type="button" (click)="sair()">{{ t('sair') }}</button></div>
+      @if (erro()) { <p class="erro">{{ erro() }}</p> }
+      @for (ajuste of ajustes(); track ajuste.key) {
+        <form class="card" (ngSubmit)="salvarAjuste(ajuste)">
+          <label>{{ ajuste.description }} <input [name]="ajuste.key" type="number" [min]="ajuste.min" [max]="ajuste.max" [(ngModel)]="ajuste.value" /></label>
+          <button class="pri" type="submit">{{ t('salvar') }}</button>
+        </form>
+      }
+      <form class="card" (ngSubmit)="criarBandeira()">
+        <label>{{ t('bandeira') }} <input name="bandeiraChave" [(ngModel)]="bandeiraChave" /></label>
+        <button class="pri" type="submit">{{ t('salvar') }}</button>
+      </form>
+      @for (bandeira of bandeiras(); track bandeira.id) {
+        <article class="card">
+          <div class="row">
+            <h2>{{ bandeira.flagKey }}</h2>
+            <button class="ghost" type="button" (click)="alternarBandeira(bandeira)">{{ bandeira.isEnabled ? t('desativar') : t('ativar') }}</button>
+          </div>
+        </article>
+      }
+    } @else if (tela() === 'saude') {
+      <div class="row"><h1>{{ t('saude') }}</h1><button class="ghost" type="button" (click)="sair()">{{ t('sair') }}</button></div>
+      @if (erro()) { <p class="erro">{{ erro() }}</p> }
+      @if (saude(); as estado) {
+        @for (servico of estado.services; track servico.name) {
+          <article class="card"><h2>{{ servico.name }}</h2><p>{{ servico.status === 'saudavel' ? t('saudavel') : servico.status === 'fora' ? t('fora') : t('degradado') }}@if (servico.detail) { · {{ t('semSonda') }} }</p></article>
+        }
+        <p class="mut">{{ t('semMetrica') }}</p>
+        <h2>{{ t('chamadas') }}</h2>
+        @for (falha of estado.integrationFailures; track falha.id) {
+          <article class="card"><p>{{ falha.createdAt }} · {{ falha.provider }} · {{ falha.operation }}</p></article>
+        }
+        @if (estado.apiErrors.length === 0) { <p class="mut">{{ t('semErroApi') }}</p> }
       }
     }
   </main>
