@@ -7,6 +7,8 @@
     <button type="button" [class.ativo]="tela() === 'lugares'" (click)="abrirLugares()">{{ t('lugares') }}</button>
     <button type="button" [class.ativo]="tela() === 'viagens'" (click)="abrirViagens()">{{ t('viagens') }}</button>
     <button type="button" [class.ativo]="tela() === 'mala'" (click)="abrirMala()">{{ t('mala') }}</button>
+    <button type="button" [class.ativo]="tela() === 'denuncias'" (click)="abrirDenuncias()">{{ t('denuncias') }}</button>
+    <button type="button" [class.ativo]="tela() === 'publicacoes'" (click)="abrirPublicacoes()">{{ t('publicacoes') }}</button>
     <label>
       <select [ngModel]="locale()" (ngModelChange)="locale.set($event)">
         <option value="pt-BR">pt-BR</option>
@@ -373,6 +375,79 @@
             </div>
           }
         </section>
+      }
+    } @else if (tela() === 'denuncias') {
+      <div class="row">
+        <h1>{{ t('denuncias') }}</h1>
+        <button class="ghost" type="button" (click)="sair()">{{ t('sair') }}</button>
+      </div>
+      @if (erro()) { <p class="erro">{{ erro() }}</p> }
+      <form class="card" (ngSubmit)="carregarDenuncias()">
+        <label>{{ t('todos') }}
+          <select name="denunciaStatus" [(ngModel)]="denunciaStatus">
+            <option value="">{{ t('todos') }}</option>
+            <option value="pending">{{ t('aberta') }}</option>
+            <option value="reviewing">{{ t('emAnalise') }}</option>
+            <option value="resolved">{{ t('procedente') }}</option>
+            <option value="dismissed">{{ t('improcedente') }}</option>
+          </select>
+        </label>
+        <button class="pri" type="submit">{{ t('buscar') }}</button>
+      </form>
+      @for (denuncia of denuncias(); track denuncia.id) {
+        <article class="card">
+          <h2>{{ denuncia.category }}</h2>
+          <p class="mut">{{ denuncia.reporterName }} · {{ denuncia.target }} · {{ rotuloDenuncia(denuncia.status) }}</p>
+          @if (denuncia.description) { <p>{{ denuncia.description }}</p> }
+          @if (denuncia.status === 'pending' || denuncia.status === 'reviewing') {
+            <label>{{ t('removerConteudo') }} <input [name]="'remover' + denuncia.id" type="checkbox" [(ngModel)]="denuncia.removeContent" /></label>
+            <label>{{ t('desativarConta') }} <input [name]="'conta' + denuncia.id" type="checkbox" [(ngModel)]="denuncia.deactivateAccount" /></label>
+            <div class="row">
+              @if (denuncia.status === 'pending') {
+                <button class="ghost" type="button" (click)="assumirDenuncia(denuncia.id)">{{ t('assumir') }}</button>
+              }
+              <button class="pri" type="button" (click)="julgarDenuncia(denuncia, 'resolved')">{{ t('procedente') }}</button>
+              <button class="ghost" type="button" (click)="julgarDenuncia(denuncia, 'dismissed')">{{ t('improcedente') }}</button>
+            </div>
+          }
+        </article>
+      }
+    } @else if (tela() === 'publicacoes') {
+      <div class="row">
+        <h1>{{ t('publicacoes') }}</h1>
+        <button class="ghost" type="button" (click)="sair()">{{ t('sair') }}</button>
+      </div>
+      @if (erro()) { <p class="erro">{{ erro() }}</p> }
+      <form class="card" (ngSubmit)="carregarPublicacoes()">
+        <label>{{ t('buscar') }} <input name="publicacaoBusca" [(ngModel)]="publicacaoBusca" /></label>
+        <label>{{ t('cadastroDe') }} <input name="publicacaoDe" type="date" [(ngModel)]="publicacaoDe" /></label>
+        <label>{{ t('cadastroAte') }} <input name="publicacaoAte" type="date" [(ngModel)]="publicacaoAte" /></label>
+        <label>{{ t('todos') }}
+          <select name="publicacaoStatus" [(ngModel)]="publicacaoStatus">
+            <option value="">{{ t('todos') }}</option>
+            <option value="visible">{{ t('visivel') }}</option>
+            <option value="removed">{{ t('removida') }}</option>
+          </select>
+        </label>
+        <button class="pri" type="submit">{{ t('buscar') }}</button>
+      </form>
+      @for (publicacao of publicacoes(); track publicacao.id) {
+        <article class="card">
+          <div class="row">
+            <div>
+              <h2>{{ publicacao.content || publicacao.authorName }}</h2>
+              <p class="mut">{{ publicacao.authorName }}@if (publicacao.placeName) { · {{ publicacao.placeName }} } · {{ publicacao.status === 'removed' ? t('removida') : t('visivel') }}@if (publicacao.rating !== null) { · {{ t('nota') }} {{ publicacao.rating }} }</p>
+              <p class="mut">{{ t('curtidas') }} {{ publicacao.likeCount }} · {{ t('comentarios') }} {{ publicacao.commentCount }}</p>
+            </div>
+            <button class="ghost" type="button" (click)="alterarPublicacao(publicacao.id, publicacao.status !== 'removed')">{{ publicacao.status === 'removed' ? t('restaurar') : t('removerConteudo') }}</button>
+          </div>
+          @for (comentario of publicacao.comments; track comentario.id) {
+            <div class="row">
+              <p>{{ comentario.authorName }}: {{ comentario.content }} · {{ t('curtidas') }} {{ comentario.likeCount }}@if (comentario.removed) { · {{ t('removida') }} }</p>
+              <button class="ghost" type="button" (click)="alterarComentario(comentario.id, !comentario.removed)">{{ comentario.removed ? t('restaurar') : t('removerConteudo') }}</button>
+            </div>
+          }
+        </article>
       }
     }
   </main>

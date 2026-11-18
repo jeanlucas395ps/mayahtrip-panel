@@ -123,7 +123,7 @@ export class App implements OnInit {
   private readonly http = inject(HttpClient);
   readonly locale = signal<Locale>('pt-BR');
   readonly token = signal(sessionStorage.getItem('painel-token') ?? '');
-  readonly tela = signal<'planos' | 'administradores' | 'usuarios' | 'lugares' | 'viagens' | 'mala'>('planos');
+  readonly tela = signal<'planos' | 'administradores' | 'usuarios' | 'lugares' | 'viagens' | 'mala' | 'denuncias' | 'publicacoes'>('planos');
   readonly planos = signal<Plano[]>([]);
   readonly administradores = signal<Administrador[]>([]);
   readonly erro = signal('');
@@ -146,6 +146,8 @@ export class App implements OnInit {
   readonly categorias = signal<CategoriaDoLugar[]>([]);
   readonly viagens = signal<ViagemPainel[]>([]);
   readonly mala = signal<CategoriaDaMala[]>([]);
+  readonly denuncias = signal<DenunciaPainel[]>([]);
+  readonly publicacoes = signal<PublicacaoPainel[]>([]);
   readonly fichaViagem = signal<ViagemPainel | null>(null);
   viagemBusca = '';
   viagemDono = '';
@@ -160,6 +162,11 @@ export class App implements OnInit {
   categoriaSlug = '';
   categoriaNome = '';
   origemId = '';
+  denunciaStatus = '';
+  publicacaoBusca = '';
+  publicacaoDe = '';
+  publicacaoAte = '';
+  publicacaoStatus = '';
 
   ngOnInit(): void {
     if (this.token()) this.carregar();
@@ -221,6 +228,88 @@ export class App implements OnInit {
     this.fichaViagem.set(null);
     this.lugarForm = null;
     if (this.token()) this.carregarMala();
+  }
+
+  abrirDenuncias(): void {
+    this.erro.set('');
+    this.tela.set('denuncias');
+    this.editando.set(null);
+    this.ficha.set(null);
+    this.fichaViagem.set(null);
+    this.lugarForm = null;
+    if (this.token()) this.carregarDenuncias();
+  }
+
+  carregarDenuncias(): void {
+    const params: Record<string, string> = {};
+    if (this.denunciaStatus) params['status'] = this.denunciaStatus;
+    this.http.get<DenunciaPainel[]>(`${API}/reports`, { headers: this.cabecalho(), params }).subscribe({
+      next: (lista) => this.denuncias.set(lista.map((item) => ({ ...item, removeContent: false, deactivateAccount: false }))),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  assumirDenuncia(id: string): void {
+    this.http.post(`${API}/reports/${id}/claim`, {}, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarDenuncias(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  julgarDenuncia(item: DenunciaPainel, decision: 'resolved' | 'dismissed'): void {
+    this.http
+      .post(`${API}/reports/${item.id}/resolve`, {
+        decision,
+        removeContent: decision === 'resolved' && item.removeContent,
+        deactivateAccount: decision === 'resolved' && item.deactivateAccount,
+      }, { headers: this.cabecalho() })
+      .subscribe({
+        next: () => this.carregarDenuncias(),
+        error: (erro: HttpErrorResponse) => this.falha(erro),
+      });
+  }
+
+  abrirPublicacoes(): void {
+    this.erro.set('');
+    this.tela.set('publicacoes');
+    this.editando.set(null);
+    this.ficha.set(null);
+    this.fichaViagem.set(null);
+    this.lugarForm = null;
+    if (this.token()) this.carregarPublicacoes();
+  }
+
+  carregarPublicacoes(): void {
+    const params: Record<string, string> = {};
+    if (this.publicacaoBusca.trim()) params['q'] = this.publicacaoBusca.trim();
+    if (this.publicacaoDe) params['from'] = this.publicacaoDe;
+    if (this.publicacaoAte) params['to'] = this.publicacaoAte;
+    if (this.publicacaoStatus) params['status'] = this.publicacaoStatus;
+    this.http.get<PublicacaoPainel[]>(`${API}/publications`, { headers: this.cabecalho(), params }).subscribe({
+      next: (lista) => this.publicacoes.set(lista),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  alterarPublicacao(id: string, remover: boolean): void {
+    this.http.post(`${API}/publications/${id}/${remover ? 'remove' : 'restore'}`, {}, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarPublicacoes(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  alterarComentario(id: string, remover: boolean): void {
+    this.http.post(`${API}/comments/${id}/${remover ? 'remove' : 'restore'}`, {}, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarPublicacoes(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  rotuloDenuncia(status: string): string {
+    if (status === 'pending') return this.t('aberta');
+    if (status === 'reviewing') return this.t('emAnalise');
+    if (status === 'resolved') return this.t('procedente');
+    return this.t('improcedente');
   }
 
   carregarMala(): void {
@@ -711,6 +800,33 @@ function lugarVazio(): LugarDoPainel {
     externalReferences: [],
     media: [],
   };
+}
+
+interface DenunciaPainel {
+  id: string;
+  status: 'pending' | 'reviewing' | 'resolved' | 'dismissed';
+  category: string;
+  description: string | null;
+  reporterName: string;
+  target: string;
+  targetId: string;
+  createdAt: string;
+  removeContent: boolean;
+  deactivateAccount: boolean;
+}
+
+interface PublicacaoPainel {
+  id: string;
+  status: string;
+  origin: string;
+  content: string | null;
+  authorName: string;
+  placeName: string | null;
+  rating: number | null;
+  likeCount: number;
+  commentCount: number;
+  createdAt: string;
+  comments: { id: string; content: string; authorName: string; likeCount: number; removed: boolean }[];
 }
 
 function mensagem(erro: HttpErrorResponse): string {
