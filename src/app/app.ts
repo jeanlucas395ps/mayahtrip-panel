@@ -1,6 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { GRUPOS, TelaPainel } from './navegacao';
 import { Locale, TEXTOS } from './textos';
 
 const API = 'http://127.0.0.1:3000/v1/admin';
@@ -205,7 +206,8 @@ export class App implements OnInit {
   private readonly http = inject(HttpClient);
   readonly locale = signal<Locale>('pt-BR');
   readonly token = signal(sessionStorage.getItem('painel-token') ?? '');
-  readonly tela = signal<'planos' | 'administradores' | 'usuarios' | 'lugares' | 'viagens' | 'mala' | 'denuncias' | 'publicacoes' | 'cupons' | 'pro' | 'maya' | 'pagamentos' | 'assinaturas' | 'estorno' | 'metodos' | 'logs' | 'inicio' | 'financeiro' | 'hub' | 'filas' | 'expiracao' | 'ajustes' | 'saude'>('planos');
+  readonly grupos = GRUPOS;
+  readonly tela = signal<TelaPainel>('inicio');
   readonly planos = signal<Plano[]>([]);
   readonly administradores = signal<Administrador[]>([]);
   readonly erro = signal('');
@@ -298,7 +300,7 @@ export class App implements OnInit {
   contaReferencia = '';
 
   ngOnInit(): void {
-    if (this.token()) this.carregar();
+    if (this.token()) this.abrirInicio();
   }
 
   t(chave: string): string {
@@ -311,7 +313,7 @@ export class App implements OnInit {
       next: (resposta) => {
         sessionStorage.setItem('painel-token', resposta.accessToken);
         this.token.set(resposta.accessToken);
-        this.carregar();
+        this.abrirInicio();
       },
       error: () => this.erro.set(this.t('erroEntrada')),
     });
@@ -322,6 +324,35 @@ export class App implements OnInit {
       next: () => this.limpar(),
       error: () => this.limpar(),
     });
+  }
+
+  abrir(destino: TelaPainel): void {
+    const mapa: Record<TelaPainel, () => void> = {
+      inicio: () => this.abrirInicio(),
+      financeiro: () => this.abrirFinanceiro(),
+      saude: () => this.abrirSaude(),
+      usuarios: () => this.abrirUsuarios(),
+      administradores: () => this.abrirAdministradores(),
+      lugares: () => this.abrirLugares(),
+      viagens: () => this.abrirViagens(),
+      mala: () => this.abrirMala(),
+      publicacoes: () => this.abrirPublicacoes(),
+      denuncias: () => this.abrirDenuncias(),
+      hub: () => this.abrirHub(),
+      planos: () => this.abrirPlanos(),
+      cupons: () => this.abrirCupons(),
+      pro: () => this.abrirPro(),
+      pagamentos: () => this.abrirPagamentos(),
+      assinaturas: () => this.abrirAssinaturas(),
+      estorno: () => this.abrirEstorno(),
+      metodos: () => this.abrirMetodos(),
+      logs: () => this.abrirLogs(),
+      expiracao: () => this.abrirExpiracao(),
+      maya: () => this.abrirMaya(),
+      filas: () => this.abrirFilas(),
+      ajustes: () => this.abrirAjustes(),
+    };
+    mapa[destino]();
   }
 
   abrirPlanos(): void {
@@ -686,7 +717,7 @@ export class App implements OnInit {
     });
   }
 
-  abrir(plano: Plano): void {
+  editarPlano(plano: Plano): void {
     this.editando.set({
       ...plano,
       description: plano.description ?? '',
