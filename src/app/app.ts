@@ -123,7 +123,7 @@ export class App implements OnInit {
   private readonly http = inject(HttpClient);
   readonly locale = signal<Locale>('pt-BR');
   readonly token = signal(sessionStorage.getItem('painel-token') ?? '');
-  readonly tela = signal<'planos' | 'administradores' | 'usuarios' | 'lugares' | 'viagens' | 'mala' | 'denuncias' | 'publicacoes'>('planos');
+  readonly tela = signal<'planos' | 'administradores' | 'usuarios' | 'lugares' | 'viagens' | 'mala' | 'denuncias' | 'publicacoes' | 'cupons' | 'pro' | 'maya' | 'pagamentos' | 'assinaturas' | 'estorno' | 'metodos' | 'logs'>('planos');
   readonly planos = signal<Plano[]>([]);
   readonly administradores = signal<Administrador[]>([]);
   readonly erro = signal('');
@@ -167,6 +167,35 @@ export class App implements OnInit {
   publicacaoDe = '';
   publicacaoAte = '';
   publicacaoStatus = '';
+  readonly cupons = signal<CupomPainel[]>([]);
+  readonly promocoes = signal<PromoPainel[]>([]);
+  readonly promoPessoas = signal<UsuarioDoApp[]>([]);
+  readonly agentes = signal<AgentePainel[]>([]);
+  readonly sandboxResposta = signal('');
+  readonly pagamentos = signal<PagamentoPainel[]>([]);
+  readonly assinaturas = signal<AssinaturaPainel[]>([]);
+  readonly elegiveis = signal<ElegivelPainel[]>([]);
+  readonly metodos = signal<MetodoPainel[]>([]);
+  readonly chamadas = signal<LogPainel[]>([]);
+  readonly webhooks = signal<EventoPainel[]>([]);
+  cupomCodigo = '';
+  cupomDias = 30;
+  cupomValidade = '';
+  cupomAtivo = true;
+  cupomId = '';
+  promoBusca = '';
+  agente: AgentePainel = agenteVazio();
+  sandboxPergunta = '';
+  pagamentoStatus = '';
+  pagamentoEmail = '';
+  pagamentoDe = '';
+  pagamentoAte = '';
+  assinaturaEmail = '';
+  assinaturaStatus = '';
+  janelaTeste = 7;
+  janelaDuplicada = 60;
+  contaNome = '';
+  contaReferencia = '';
 
   ngOnInit(): void {
     if (this.token()) this.carregar();
@@ -751,6 +780,290 @@ export class App implements OnInit {
     });
   }
 
+  abrirCupons(): void {
+    this.preparar('cupons');
+    if (this.token()) this.carregarCupons();
+  }
+
+  carregarCupons(): void {
+    this.http.get<CupomPainel[]>(`${API}/coupons`, { headers: this.cabecalho() }).subscribe({
+      next: (lista) => this.cupons.set(lista),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  editarCupom(cupom: CupomPainel): void {
+    this.cupomId = cupom.id;
+    this.cupomCodigo = cupom.code;
+    this.cupomDias = cupom.freeDays;
+    this.cupomValidade = cupom.validUntil ?? '';
+    this.cupomAtivo = cupom.isActive;
+  }
+
+  salvarCupom(): void {
+    const corpo = { code: this.cupomCodigo.trim(), freeDays: Number(this.cupomDias), validUntil: this.cupomValidade || undefined, isActive: this.cupomAtivo };
+    const pedido = this.cupomId
+      ? this.http.patch<CupomPainel[]>(`${API}/coupons/${this.cupomId}`, corpo, { headers: this.cabecalho() })
+      : this.http.post<CupomPainel[]>(`${API}/coupons`, corpo, { headers: this.cabecalho() });
+    pedido.subscribe({
+      next: (lista) => {
+        this.cupons.set(lista);
+        this.cupomId = '';
+        this.cupomCodigo = '';
+      },
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  excluirCupom(id: string): void {
+    this.http.delete(`${API}/coupons/${id}`, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarCupons(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  abrirPro(): void {
+    this.preparar('pro');
+    if (this.token()) this.carregarPromocoes();
+  }
+
+  carregarPromocoes(): void {
+    this.http.get<PromoPainel[]>(`${API}/promo`, { headers: this.cabecalho() }).subscribe({
+      next: (lista) => this.promocoes.set(lista),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  buscarPromo(): void {
+    this.http.get<UsuarioDoApp[]>(`${API}/users`, { headers: this.cabecalho(), params: { q: this.promoBusca.trim() } }).subscribe({
+      next: (lista) => this.promoPessoas.set(lista),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  concederPromo(userId: string): void {
+    this.http.post(`${API}/promo`, { userId }, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarPromocoes(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  revogarPromo(id: string): void {
+    this.http.post(`${API}/promo/${id}/revoke`, {}, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarPromocoes(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  abrirMaya(): void {
+    this.preparar('maya');
+    if (this.token()) this.carregarAgentes();
+  }
+
+  carregarAgentes(): void {
+    this.http.get<AgentePainel[]>(`${API}/maya/models`, { headers: this.cabecalho() }).subscribe({
+      next: (lista) => this.agentes.set(lista),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  editarAgente(agente: AgentePainel): void {
+    this.agente = { ...agente };
+  }
+
+  salvarAgente(): void {
+    const corpo = {
+      provider: this.agente.provider.trim(),
+      modelName: this.agente.modelName.trim(),
+      name: this.agente.name.trim(),
+      family: this.agente.family,
+      conversationType: this.agente.conversationType.trim(),
+      maxTokens: Number(this.agente.maxTokens),
+      temperature: Number(this.agente.temperature),
+      prompts: this.agente.prompts,
+      sortOrder: Number(this.agente.sortOrder),
+    };
+    const pedido = this.agente.id
+      ? this.http.patch<AgentePainel>(`${API}/maya/models/${this.agente.id}`, corpo, { headers: this.cabecalho() })
+      : this.http.post<AgentePainel>(`${API}/maya/models`, corpo, { headers: this.cabecalho() });
+    pedido.subscribe({
+      next: () => {
+        this.agente = agenteVazio();
+        this.carregarAgentes();
+      },
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  criarPadraoMaya(): void {
+    this.http.post(`${API}/maya/models/defaults`, {}, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarAgentes(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  ligarAgente(agente: AgentePainel, ativo: boolean): void {
+    this.http.post(`${API}/maya/models/${agente.id}/${ativo ? 'activate' : 'deactivate'}`, {}, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarAgentes(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  excluirAgente(id: string): void {
+    this.http.delete(`${API}/maya/models/${id}`, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarAgentes(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  testarAgente(): void {
+    if (!this.agente.id || !this.sandboxPergunta.trim()) return;
+    this.http.post<{ answer: string }>(`${API}/maya/models/${this.agente.id}/sandbox`, { question: this.sandboxPergunta.trim() }, { headers: this.cabecalho() }).subscribe({
+      next: (resposta) => this.sandboxResposta.set(resposta.answer),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  abrirPagamentos(): void {
+    this.preparar('pagamentos');
+    if (this.token()) this.carregarPagamentos();
+  }
+
+  carregarPagamentos(): void {
+    const params: Record<string, string> = {};
+    if (this.pagamentoStatus) params['status'] = this.pagamentoStatus;
+    if (this.pagamentoEmail.trim()) params['email'] = this.pagamentoEmail.trim();
+    if (this.pagamentoDe) params['from'] = this.pagamentoDe;
+    if (this.pagamentoAte) params['to'] = this.pagamentoAte;
+    this.http.get<PagamentoPainel[]>(`${API}/payments`, { headers: this.cabecalho(), params }).subscribe({
+      next: (lista) => this.pagamentos.set(lista),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  totalPagamento(status: string): number {
+    return this.pagamentos().filter((item) => item.status === status).length;
+  }
+
+  abrirAssinaturas(): void {
+    this.preparar('assinaturas');
+    if (this.token()) this.carregarAssinaturas();
+  }
+
+  carregarAssinaturas(): void {
+    const params: Record<string, string> = {};
+    if (this.assinaturaEmail.trim()) params['email'] = this.assinaturaEmail.trim();
+    if (this.assinaturaStatus) params['status'] = this.assinaturaStatus;
+    this.http.get<AssinaturaPainel[]>(`${API}/subscriptions`, { headers: this.cabecalho(), params }).subscribe({
+      next: (lista) => this.assinaturas.set(lista),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  abrirEstorno(): void {
+    this.preparar('estorno');
+    if (this.token()) {
+      this.carregarElegiveis();
+      this.carregarJanelas();
+    }
+  }
+
+  carregarElegiveis(): void {
+    this.http.get<ElegivelPainel[]>(`${API}/refunds/eligible`, { headers: this.cabecalho() }).subscribe({
+      next: (lista) => this.elegiveis.set(lista),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  carregarJanelas(): void {
+    this.http.get<{ trialDays: number; duplicateDays: number }>(`${API}/refund-windows`, { headers: this.cabecalho() }).subscribe({
+      next: (janela) => {
+        this.janelaTeste = janela.trialDays;
+        this.janelaDuplicada = janela.duplicateDays;
+      },
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  salvarJanelas(): void {
+    this.http.patch(`${API}/refund-windows`, { trialDays: Number(this.janelaTeste), duplicateDays: Number(this.janelaDuplicada) }, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarElegiveis(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  aprovarEstorno(id: string, reason: 'trial' | 'duplicate_charge'): void {
+    if (!globalThis.confirm(this.t('confirmarEstorno'))) return;
+    this.http.post(`${API}/refunds`, { subscriptionId: id, reason }, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarElegiveis(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  abrirMetodos(): void {
+    this.preparar('metodos');
+    if (this.token()) this.carregarMetodos();
+  }
+
+  carregarMetodos(): void {
+    this.http.get<MetodoPainel[]>(`${API}/payment-methods`, { headers: this.cabecalho() }).subscribe({
+      next: (lista) => this.metodos.set(lista),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  definirMetodo(metodo: MetodoPainel, isEnabled: boolean): void {
+    this.http.patch<MetodoPainel[]>(`${API}/payment-methods`, { method: metodo.method, isEnabled }, { headers: this.cabecalho() }).subscribe({
+      next: (lista) => this.metodos.set(lista),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  abrirLogs(): void {
+    this.preparar('logs');
+    if (this.token()) this.carregarLogs();
+  }
+
+  carregarLogs(): void {
+    this.http.get<LogPainel[]>(`${API}/integration-logs`, { headers: this.cabecalho() }).subscribe({
+      next: (lista) => this.chamadas.set(lista),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+    this.http.get<EventoPainel[]>(`${API}/asaas-events`, { headers: this.cabecalho() }).subscribe({
+      next: (lista) => this.webhooks.set(lista),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  criarContaProvedor(): void {
+    this.http.post<{ id: string }>(`${API}/providers`, { provider: 'asaas', accountName: this.contaNome.trim(), credentialsReference: this.contaReferencia.trim() }, { headers: this.cabecalho() }).subscribe({
+      next: (conta) => {
+        this.contaNome = '';
+        this.contaReferencia = '';
+        this.http.post(`${API}/providers/${conta.id}/sync`, {}, { headers: this.cabecalho() }).subscribe({
+          next: () => this.carregarLogs(),
+          error: (erro: HttpErrorResponse) => this.falha(erro),
+        });
+      },
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  nomeMetodo(method: string): string {
+    if (method === 'credit_card') return this.t('cartao');
+    if (method === 'boleto') return this.t('boleto');
+    return this.t('pix');
+  }
+
+  private preparar(tela: 'cupons' | 'pro' | 'maya' | 'pagamentos' | 'assinaturas' | 'estorno' | 'metodos' | 'logs'): void {
+    this.erro.set('');
+    this.tela.set(tela);
+    this.editando.set(null);
+    this.ficha.set(null);
+    this.fichaViagem.set(null);
+    this.lugarForm = null;
+  }
+
   private cabecalho(): { Authorization: string } {
     return { Authorization: `Bearer ${this.token()}` };
   }
@@ -827,6 +1140,95 @@ interface PublicacaoPainel {
   commentCount: number;
   createdAt: string;
   comments: { id: string; content: string; authorName: string; likeCount: number; removed: boolean }[];
+}
+
+interface CupomPainel {
+  id: string;
+  code: string;
+  freeDays: number;
+  validUntil: string | null;
+  isActive: boolean;
+}
+
+interface PromoPainel {
+  id: string;
+  email: string;
+  userName: string;
+  startsAt: string;
+  endsAt: string;
+  revokedAt: string | null;
+}
+
+interface AgentePainel {
+  id: string;
+  provider: string;
+  modelName: string;
+  isActive: boolean;
+  name: string;
+  family: string;
+  conversationType: string;
+  maxTokens: number;
+  temperature: number;
+  prompts: string;
+  sortOrder: number;
+}
+
+interface PagamentoPainel {
+  id: string;
+  amount: string;
+  currency: string;
+  status: string;
+  providerPaymentId: string | null;
+  email: string;
+  code: string;
+  paidAt: string | null;
+}
+
+interface AssinaturaPainel {
+  id: string;
+  email: string;
+  userName: string;
+  code: string;
+  status: string;
+  startedAt: string | null;
+  endsAt: string | null;
+  providerSubscriptionId: string | null;
+  cancelAtPeriodEnd: boolean;
+  refunded: boolean;
+  coupon: boolean;
+  promo: boolean;
+}
+
+interface ElegivelPainel {
+  id: string;
+  userName: string;
+  code: string;
+  paidAt: string;
+}
+
+interface MetodoPainel {
+  method: string;
+  isEnabled: boolean;
+}
+
+interface LogPainel {
+  id: string;
+  provider: string;
+  operation: string | null;
+  status: string | null;
+  responseCode: number | null;
+  createdAt: string;
+}
+
+interface EventoPainel {
+  id: string;
+  eventType: string;
+  providerEventId: string | null;
+  createdAt: string;
+}
+
+function agenteVazio(): AgentePainel {
+  return { id: '', provider: 'openai', modelName: '', name: '', family: 'GPT-4', isActive: false, conversationType: 'duvida', maxTokens: 800, temperature: 0.4, prompts: '', sortOrder: 1 };
 }
 
 function mensagem(erro: HttpErrorResponse): string {
