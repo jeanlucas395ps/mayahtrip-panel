@@ -30,6 +30,23 @@ interface Administrador {
   senha: string;
 }
 
+interface UsuarioDoApp {
+  id: string;
+  name: string;
+  username: string;
+  email: string;
+  countryId: string | null;
+  countryName: string | null;
+  locale: string;
+  currency: string;
+  planCode: string;
+  emailVerified: boolean;
+  createdAt: string;
+  status: 'pending' | 'active' | 'inactive';
+  deleted: boolean;
+  entrada: 'google' | 'senha' | 'ambos';
+}
+
 @Component({
   selector: 'app-root',
   imports: [FormsModule],
@@ -39,15 +56,25 @@ export class App implements OnInit {
   private readonly http = inject(HttpClient);
   readonly locale = signal<Locale>('pt-BR');
   readonly token = signal(sessionStorage.getItem('painel-token') ?? '');
-  readonly tela = signal<'planos' | 'administradores'>('planos');
+  readonly tela = signal<'planos' | 'administradores' | 'usuarios'>('planos');
   readonly planos = signal<Plano[]>([]);
   readonly administradores = signal<Administrador[]>([]);
   readonly erro = signal('');
   readonly editando = signal<Plano | null>(null);
   readonly editandoAdmin = signal<Administrador | null>(null);
   readonly confirmando = signal('');
+  readonly usuarios = signal<UsuarioDoApp[]>([]);
+  readonly ficha = signal<UsuarioDoApp | null>(null);
+  readonly paises = signal<{ id: string; name: string }[]>([]);
   email = '';
   senha = '';
+  busca = '';
+  filtroAtivo = '';
+  filtroVerificado = '';
+  filtroEntrada = '';
+  filtroPais = '';
+  filtroDe = '';
+  filtroAte = '';
 
   ngOnInit(): void {
     if (this.token()) this.carregar();
@@ -87,7 +114,17 @@ export class App implements OnInit {
     this.erro.set('');
     this.tela.set('administradores');
     this.editando.set(null);
+    this.ficha.set(null);
     if (this.token()) this.carregarAdministradores();
+  }
+
+  abrirUsuarios(): void {
+    this.erro.set('');
+    this.confirmando.set('');
+    this.tela.set('usuarios');
+    this.editando.set(null);
+    this.editandoAdmin.set(null);
+    if (this.token()) this.carregarUsuarios();
   }
 
   carregar(): void {
@@ -134,6 +171,65 @@ export class App implements OnInit {
     const acao = ligar ? 'activate' : 'deactivate';
     this.http.post(`${API}/administrators/${admin.id}/${acao}`, {}, { headers: this.cabecalho() }).subscribe({
       next: () => this.carregarAdministradores(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  carregarUsuarios(): void {
+    const params: Record<string, string> = {};
+    if (this.busca.trim()) params['q'] = this.busca.trim();
+    if (this.filtroAtivo) params['ativo'] = this.filtroAtivo;
+    if (this.filtroVerificado) params['verificado'] = this.filtroVerificado;
+    if (this.filtroEntrada) params['entrada'] = this.filtroEntrada;
+    if (this.filtroPais) params['pais'] = this.filtroPais;
+    if (this.filtroDe) params['cadastroDe'] = this.filtroDe;
+    if (this.filtroAte) params['cadastroAte'] = this.filtroAte;
+    this.http.get<UsuarioDoApp[]>(`${API}/users`, { headers: this.cabecalho(), params }).subscribe({
+      next: (lista) => {
+        this.usuarios.set(lista);
+        if (!this.filtroPais) {
+          const mapa = new Map<string, string>();
+          for (const usuario of lista) {
+            if (usuario.countryId && usuario.countryName) mapa.set(usuario.countryId, usuario.countryName);
+          }
+          this.paises.set([...mapa].map(([id, name]) => ({ id, name })));
+        }
+        const aberta = this.ficha();
+        if (aberta) this.ficha.set(lista.find((usuario) => usuario.id === aberta.id) ?? aberta);
+      },
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  abrirFicha(usuario: UsuarioDoApp): void {
+    this.confirmando.set('');
+    this.http.get<UsuarioDoApp>(`${API}/users/${usuario.id}`, { headers: this.cabecalho() }).subscribe({
+      next: (ficha) => this.ficha.set(ficha),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  mudarUsuario(usuario: UsuarioDoApp, acao: 'activate' | 'deactivate' | 'restore'): void {
+    this.http.post<UsuarioDoApp>(`${API}/users/${usuario.id}/${acao}`, {}, { headers: this.cabecalho() }).subscribe({
+      next: (ficha) => {
+        this.ficha.set(ficha);
+        this.carregarUsuarios();
+      },
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  excluirUsuario(usuario: UsuarioDoApp): void {
+    if (this.confirmando() !== usuario.id) {
+      this.confirmando.set(usuario.id);
+      return;
+    }
+    this.http.delete(`${API}/users/${usuario.id}`, { headers: this.cabecalho() }).subscribe({
+      next: () => {
+        this.confirmando.set('');
+        this.carregarUsuarios();
+        this.abrirFicha({ ...usuario, deleted: true });
+      },
       error: (erro: HttpErrorResponse) => this.falha(erro),
     });
   }
@@ -230,6 +326,8 @@ export class App implements OnInit {
     this.token.set('');
     this.planos.set([]);
     this.administradores.set([]);
+    this.usuarios.set([]);
+    this.ficha.set(null);
     this.editando.set(null);
     this.editandoAdmin.set(null);
   }

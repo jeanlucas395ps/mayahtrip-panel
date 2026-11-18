@@ -3,6 +3,7 @@
     <strong>{{ t('marca') }}</strong>
     <button type="button" [class.ativo]="tela() === 'planos'" (click)="abrirPlanos()">{{ t('planos') }}</button>
     <button type="button" [class.ativo]="tela() === 'administradores'" (click)="abrirAdministradores()">{{ t('administradores') }}</button>
+    <button type="button" [class.ativo]="tela() === 'usuarios'" (click)="abrirUsuarios()">{{ t('usuarios') }}</button>
     <label>
       <select [ngModel]="locale()" (ngModelChange)="locale.set($event)">
         <option value="pt-BR">pt-BR</option>
@@ -77,7 +78,7 @@
           </div>
         </form>
       }
-    } @else {
+    } @else if (tela() === 'administradores') {
       <div class="row">
         <h1>{{ t('administradores') }}</h1>
         <div>
@@ -111,6 +112,74 @@
           </label>
           <button class="lime" type="submit">{{ t('salvar') }}</button>
         </form>
+      }
+    } @else {
+      <div class="row">
+        <h1>{{ t('usuarios') }}</h1>
+        <button class="ghost" type="button" (click)="sair()">{{ t('sair') }}</button>
+      </div>
+      <form class="filtros" (ngSubmit)="carregarUsuarios()">
+        <label>{{ t('buscar') }} <input name="busca" [(ngModel)]="busca" /></label>
+        <label>{{ t('ativo') }}
+          <select name="filtroAtivo" [(ngModel)]="filtroAtivo">
+            <option value="">{{ t('todos') }}</option>
+            <option value="true">{{ t('ativo') }}</option>
+            <option value="false">{{ t('inativo') }}</option>
+          </select>
+        </label>
+        <label>{{ t('verificado') }}
+          <select name="filtroVerificado" [(ngModel)]="filtroVerificado">
+            <option value="">{{ t('todos') }}</option>
+            <option value="true">{{ t('sim') }}</option>
+            <option value="false">{{ t('nao') }}</option>
+          </select>
+        </label>
+        <label>{{ t('entrada') }}
+          <select name="filtroEntrada" [(ngModel)]="filtroEntrada">
+            <option value="">{{ t('todos') }}</option>
+            <option value="senha">{{ t('senha') }}</option>
+            <option value="google">Google</option>
+          </select>
+        </label>
+        <label>{{ t('pais') }}
+          <select name="filtroPais" [(ngModel)]="filtroPais">
+            <option value="">{{ t('todos') }}</option>
+            @for (pais of paises(); track pais.id) {
+              <option [value]="pais.id">{{ pais.name }}</option>
+            }
+          </select>
+        </label>
+        <label>{{ t('cadastroDe') }} <input name="filtroDe" type="date" [(ngModel)]="filtroDe" /></label>
+        <label>{{ t('cadastroAte') }} <input name="filtroAte" type="date" [(ngModel)]="filtroAte" /></label>
+        <button class="pri" type="submit">{{ t('buscar') }}</button>
+      </form>
+      @if (erro()) { <p class="erro">{{ erro() }}</p> }
+      @for (usuario of usuarios(); track usuario.id) {
+        <article class="card">
+          <div class="row">
+            <div>
+              <h2>{{ usuario.name }}</h2>
+              <p class="mut">@{{ usuario.username }} · {{ usuario.email }} · {{ usuario.deleted ? t('excluido') : (usuario.status === 'active' ? t('ativo') : usuario.status === 'inactive' ? t('inativo') : t('pendente')) }}</p>
+            </div>
+            <button class="ghost" type="button" (click)="abrirFicha(usuario)">{{ t('ficha') }}</button>
+          </div>
+        </article>
+      }
+      @if (ficha(); as usuario) {
+        <section class="card">
+          <h2>{{ usuario.name }}</h2>
+          <p class="mut">@{{ usuario.username }} · {{ usuario.email }}</p>
+          <p class="mut">{{ t('pais') }}: {{ usuario.countryName || '—' }} · {{ t('idioma') }}: {{ usuario.locale }} · {{ t('moeda') }}: {{ usuario.currency }} · {{ t('plano') }}: {{ usuario.planCode }}</p>
+          <p class="mut">{{ usuario.emailVerified ? t('verificado') : t('naoVerificado') }} · {{ usuario.createdAt }} · {{ usuario.entrada }}</p>
+          <div class="row">
+            @if (usuario.deleted) {
+              <button class="lime" type="button" (click)="mudarUsuario(usuario, 'restore')">{{ t('restaurar') }}</button>
+            } @else {
+              <button class="pri" type="button" (click)="mudarUsuario(usuario, usuario.status === 'active' ? 'deactivate' : 'activate')">{{ usuario.status === 'active' ? t('desativar') : t('ativar') }}</button>
+              <button class="ghost" type="button" (click)="excluirUsuario(usuario)">{{ confirmando() === usuario.id ? t('confirmarExclusao') : t('excluir') }}</button>
+            }
+          </div>
+        </section>
       }
     }
   </main>
