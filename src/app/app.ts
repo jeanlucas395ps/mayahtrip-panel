@@ -66,6 +66,22 @@ interface LugarResumo {
   cityName: string | null;
 }
 
+interface ItemDaMala {
+  id: string;
+  name: string;
+  description: string | null;
+  isDefault: boolean;
+  sortOrder: number;
+}
+
+interface CategoriaDaMala {
+  id: string;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
+  items: ItemDaMala[];
+}
+
 interface ViagemPainel {
   id: string;
   title: string;
@@ -107,7 +123,7 @@ export class App implements OnInit {
   private readonly http = inject(HttpClient);
   readonly locale = signal<Locale>('pt-BR');
   readonly token = signal(sessionStorage.getItem('painel-token') ?? '');
-  readonly tela = signal<'planos' | 'administradores' | 'usuarios' | 'lugares' | 'viagens'>('planos');
+  readonly tela = signal<'planos' | 'administradores' | 'usuarios' | 'lugares' | 'viagens' | 'mala'>('planos');
   readonly planos = signal<Plano[]>([]);
   readonly administradores = signal<Administrador[]>([]);
   readonly erro = signal('');
@@ -129,6 +145,7 @@ export class App implements OnInit {
   readonly lugares = signal<LugarResumo[]>([]);
   readonly categorias = signal<CategoriaDoLugar[]>([]);
   readonly viagens = signal<ViagemPainel[]>([]);
+  readonly mala = signal<CategoriaDaMala[]>([]);
   readonly fichaViagem = signal<ViagemPainel | null>(null);
   viagemBusca = '';
   viagemDono = '';
@@ -194,6 +211,38 @@ export class App implements OnInit {
     this.editandoAdmin.set(null);
     this.lugarForm = null;
     if (this.token()) this.carregarUsuarios();
+  }
+
+  abrirMala(): void {
+    this.erro.set('');
+    this.tela.set('mala');
+    this.editando.set(null);
+    this.ficha.set(null);
+    this.fichaViagem.set(null);
+    this.lugarForm = null;
+    if (this.token()) this.carregarMala();
+  }
+
+  carregarMala(): void {
+    this.http.get<CategoriaDaMala[]>(`${API}/packing`, { headers: this.cabecalho() }).subscribe({
+      next: (lista) => this.mala.set(lista),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  salvarItem(categoria: CategoriaDaMala, item: ItemDaMala): void {
+    this.http
+      .patch<CategoriaDaMala[]>(`${API}/packing/items/${item.id}`, {
+        name: item.name,
+        description: item.description,
+        sortOrder: item.sortOrder,
+        isDefault: item.isDefault,
+        categoryId: categoria.id,
+      }, { headers: this.cabecalho() })
+      .subscribe({
+        next: (lista) => this.mala.set(lista),
+        error: (erro: HttpErrorResponse) => this.falha(erro),
+      });
   }
 
   abrirViagens(): void {

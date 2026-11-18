@@ -6,6 +6,7 @@
     <button type="button" [class.ativo]="tela() === 'usuarios'" (click)="abrirUsuarios()">{{ t('usuarios') }}</button>
     <button type="button" [class.ativo]="tela() === 'lugares'" (click)="abrirLugares()">{{ t('lugares') }}</button>
     <button type="button" [class.ativo]="tela() === 'viagens'" (click)="abrirViagens()">{{ t('viagens') }}</button>
+    <button type="button" [class.ativo]="tela() === 'mala'" (click)="abrirMala()">{{ t('mala') }}</button>
     <label>
       <select [ngModel]="locale()" (ngModelChange)="locale.set($event)">
         <option value="pt-BR">pt-BR</option>
@@ -353,6 +354,24 @@
             <button class="ghost" type="button" (click)="publicarViagem(ficha.id, ficha.visibility !== 'public')">{{ ficha.visibility === 'public' ? t('tornarPrivada') : t('publicar') }}</button>
             <button class="ghost" type="button" (click)="excluirViagem(ficha.id)">{{ t('excluir') }}</button>
           </div>
+        </section>
+      }
+    } @else if (tela() === 'mala') {
+      <div class="row">
+        <h1>{{ t('mala') }}</h1>
+        <button class="ghost" type="button" (click)="sair()">{{ t('sair') }}</button>
+      </div>
+      @if (erro()) { <p class="erro">{{ erro() }}</p> }
+      @for (categoria of mala(); track categoria.id) {
+        <section class="card">
+          <h2>{{ categoria.name }}</h2>
+          @for (item of categoria.items; track item.id) {
+            <div class="row">
+              <label>{{ t('item') }} <input [name]="'mala' + item.id" [(ngModel)]="item.name" /></label>
+              <label>{{ t('padrao') }} <input [name]="'padrao' + item.id" type="checkbox" [(ngModel)]="item.isDefault" /></label>
+              <button class="ghost" type="button" (click)="salvarItem(categoria, item)">{{ t('salvar') }}</button>
+            </div>
+          }
         </section>
       }
     }

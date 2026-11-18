@@ -94,6 +94,9 @@ export const TEXTOS: Record<Locale, Record<string, string>> = {
     doZero: 'Começar do zero',
     soAtivas: 'Só ativas',
     soPublicas: 'Só públicas',
+    mala: 'Mala',
+    item: 'Item',
+    padrao: 'Entra na viagem nova',
   },
   'pt-PT': {
     marca: 'MayahTrip',
@@ -188,6 +191,9 @@ export const TEXTOS: Record<Locale, Record<string, string>> = {
     doZero: 'Começar do zero',
     soAtivas: 'Só ativas',
     soPublicas: 'Só públicas',
+    mala: 'Mala',
+    item: 'Item',
+    padrao: 'Entra na viagem nova',
   },
   en: {
     marca: 'MayahTrip',
@@ -282,6 +288,9 @@ export const TEXTOS: Record<Locale, Record<string, string>> = {
     doZero: 'Start from scratch',
     soAtivas: 'Active only',
     soPublicas: 'Public only',
+    mala: 'Packing',
+    item: 'Item',
+    padrao: 'Included in a new trip',
   },
   es: {
     marca: 'MayahTrip',
@@ -376,5 +385,8 @@ export const TEXTOS: Record<Locale, Record<string, string>> = {
     doZero: 'Empezar de cero',
     soAtivas: 'Solo activas',
     soPublicas: 'Solo públicas',
+    mala: 'Maleta',
+    item: 'Artículo',
+    padrao: 'Entra en el viaje nuevo',
   },
 };
