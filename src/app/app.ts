@@ -22,6 +22,14 @@ interface Plano {
   features: Feature[];
 }
 
+interface Administrador {
+  id: string;
+  name: string;
+  email: string;
+  isActive: boolean;
+  senha: string;
+}
+
 @Component({
   selector: 'app-root',
   imports: [FormsModule],
@@ -31,9 +39,13 @@ export class App implements OnInit {
   private readonly http = inject(HttpClient);
   readonly locale = signal<Locale>('pt-BR');
   readonly token = signal(sessionStorage.getItem('painel-token') ?? '');
+  readonly tela = signal<'planos' | 'administradores'>('planos');
   readonly planos = signal<Plano[]>([]);
+  readonly administradores = signal<Administrador[]>([]);
   readonly erro = signal('');
   readonly editando = signal<Plano | null>(null);
+  readonly editandoAdmin = signal<Administrador | null>(null);
+  readonly confirmando = signal('');
   email = '';
   senha = '';
 
@@ -58,13 +70,87 @@ export class App implements OnInit {
   }
 
   sair(): void {
-    sessionStorage.removeItem('painel-token');
-    this.token.set('');
-    this.planos.set([]);
+    this.http.post(`${API}/logout`, {}, { headers: this.cabecalho() }).subscribe({
+      next: () => this.limpar(),
+      error: () => this.limpar(),
+    });
+  }
+
+  abrirPlanos(): void {
+    this.erro.set('');
+    this.tela.set('planos');
+    this.editandoAdmin.set(null);
+    if (this.token()) this.carregar();
+  }
+
+  abrirAdministradores(): void {
+    this.erro.set('');
+    this.tela.set('administradores');
+    this.editando.set(null);
+    if (this.token()) this.carregarAdministradores();
   }
 
   carregar(): void {
-    this.http.get<Plano[]>(`${API}/plans`, { headers: this.cabecalho() }).subscribe((lista) => this.planos.set(lista));
+    this.http.get<Plano[]>(`${API}/plans`, { headers: this.cabecalho() }).subscribe({
+      next: (lista) => this.planos.set(lista),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  carregarAdministradores(): void {
+    this.http.get<Administrador[]>(`${API}/administrators`, { headers: this.cabecalho() }).subscribe({
+      next: (lista) => this.administradores.set(lista.map((admin) => ({ ...admin, senha: '' }))),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  novoAdmin(): void {
+    this.confirmando.set('');
+    this.editandoAdmin.set({ id: '', name: '', email: '', isActive: true, senha: '' });
+  }
+
+  abrirAdmin(admin: Administrador): void {
+    this.confirmando.set('');
+    this.editandoAdmin.set({ ...admin, senha: '' });
+  }
+
+  salvarAdmin(admin: Administrador): void {
+    const corpo = admin.id
+      ? { nome: admin.name, email: admin.email, ...(admin.senha.trim() ? { senha: admin.senha } : {}) }
+      : { nome: admin.name, email: admin.email, senha: admin.senha };
+    const pedido = admin.id
+      ? this.http.patch<Administrador>(`${API}/administrators/${admin.id}`, corpo, { headers: this.cabecalho() })
+      : this.http.post<Administrador>(`${API}/administrators`, corpo, { headers: this.cabecalho() });
+    pedido.subscribe({
+      next: () => {
+        this.editandoAdmin.set(null);
+        this.carregarAdministradores();
+      },
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  ativarAdmin(admin: Administrador, ligar: boolean): void {
+    const acao = ligar ? 'activate' : 'deactivate';
+    this.http.post(`${API}/administrators/${admin.id}/${acao}`, {}, { headers: this.cabecalho() }).subscribe({
+      next: () => this.carregarAdministradores(),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  excluirAdmin(admin: Administrador): void {
+    if (this.confirmando() !== admin.id) {
+      this.confirmando.set(admin.id);
+      return;
+    }
+    this.http.delete(`${API}/administrators/${admin.id}`, { headers: this.cabecalho() }).subscribe({
+      next: () => {
+        this.confirmando.set('');
+        this.editandoAdmin.set(null);
+        this.carregarAdministradores();
+      },
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
   }
 
   novo(): void {
@@ -114,7 +200,7 @@ export class App implements OnInit {
         this.editando.set(null);
         this.carregar();
       },
-      error: (erro: HttpErrorResponse) => this.erro.set(mensagem(erro)),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
     });
   }
 
@@ -122,12 +208,30 @@ export class App implements OnInit {
     const acao = ligar ? 'activate' : 'deactivate';
     this.http.post(`${API}/plans/${plano.id}/${acao}`, {}, { headers: this.cabecalho() }).subscribe({
       next: () => this.carregar(),
-      error: (erro: HttpErrorResponse) => this.erro.set(mensagem(erro)),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
     });
   }
 
   private cabecalho(): { Authorization: string } {
     return { Authorization: `Bearer ${this.token()}` };
+  }
+
+  private falha(erro: HttpErrorResponse): void {
+    if (erro.status === 401 && this.token()) {
+      this.limpar();
+      this.erro.set(this.t('erroEntrada'));
+      return;
+    }
+    this.erro.set(mensagem(erro));
+  }
+
+  private limpar(): void {
+    sessionStorage.removeItem('painel-token');
+    this.token.set('');
+    this.planos.set([]);
+    this.administradores.set([]);
+    this.editando.set(null);
+    this.editandoAdmin.set(null);
   }
 }
 

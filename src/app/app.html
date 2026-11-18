@@ -1,7 +1,8 @@
 <div class="shell">
   <nav>
     <strong>{{ t('marca') }}</strong>
-    <button type="button">{{ t('planos') }}</button>
+    <button type="button" [class.ativo]="tela() === 'planos'" (click)="abrirPlanos()">{{ t('planos') }}</button>
+    <button type="button" [class.ativo]="tela() === 'administradores'" (click)="abrirAdministradores()">{{ t('administradores') }}</button>
     <label>
       <select [ngModel]="locale()" (ngModelChange)="locale.set($event)">
         <option value="pt-BR">pt-BR</option>
@@ -20,7 +21,7 @@
         <button class="pri" type="submit">{{ t('entrar') }}</button>
         @if (erro()) { <p class="erro">{{ erro() }}</p> }
       </form>
-    } @else {
+    } @else if (tela() === 'planos') {
       <div class="row">
         <h1>{{ t('planos') }}</h1>
         <div>
@@ -74,6 +75,41 @@
             <button class="ghost" type="button" (click)="adicionarFeature(plano)">{{ t('adicionar') }}</button>
             <button class="lime" type="submit">{{ t('salvar') }}</button>
           </div>
+        </form>
+      }
+    } @else {
+      <div class="row">
+        <h1>{{ t('administradores') }}</h1>
+        <div>
+          <button class="lime" type="button" (click)="novoAdmin()">{{ t('novoAdmin') }}</button>
+          <button class="ghost" type="button" (click)="sair()">{{ t('sair') }}</button>
+        </div>
+      </div>
+      @if (erro()) { <p class="erro">{{ erro() }}</p> }
+      @for (admin of administradores(); track admin.id) {
+        <article class="card">
+          <div class="row">
+            <div>
+              <h2>{{ admin.name }}</h2>
+              <p class="mut">{{ admin.email }} · {{ admin.isActive ? t('ativo') : t('inativo') }}</p>
+            </div>
+            <div>
+              <button class="ghost" type="button" (click)="abrirAdmin(admin)">{{ t('editar') }}</button>
+              <button class="pri" type="button" (click)="ativarAdmin(admin, !admin.isActive)">{{ admin.isActive ? t('desativar') : t('ativar') }}</button>
+              <button class="ghost" type="button" (click)="excluirAdmin(admin)">{{ confirmando() === admin.id ? t('confirmarExclusao') : t('excluir') }}</button>
+            </div>
+          </div>
+        </article>
+      }
+      @if (editandoAdmin(); as admin) {
+        <form class="card" (ngSubmit)="salvarAdmin(admin)">
+          <h2>{{ admin.id ? admin.name : t('novoAdmin') }}</h2>
+          <label>{{ t('nome') }} <input name="adminNome" [(ngModel)]="admin.name" /></label>
+          <label>{{ t('email') }} <input name="adminEmail" [(ngModel)]="admin.email" autocomplete="off" /></label>
+          <label>{{ admin.id ? t('senhaNova') : t('senha') }}
+            <input name="adminSenha" type="password" [(ngModel)]="admin.senha" [attr.placeholder]="admin.id ? t('senhaOpcional') : ''" autocomplete="new-password" />
+          </label>
+          <button class="lime" type="submit">{{ t('salvar') }}</button>
         </form>
       }
     }

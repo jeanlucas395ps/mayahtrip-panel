@@ -23,13 +23,14 @@ nav strong { display: block; font-size: 13px; letter-spacing: 0.08em; text-trans
 nav button {
   width: 100%;
   text-align: left;
-  border: 0;
-  background: var(--ink);
-  color: white;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
   border-radius: 12px;
   padding: 12px 14px;
   margin-top: 18px;
 }
+nav button.ativo { background: var(--ink); color: white; border-color: var(--ink); }
 main { padding: 36px 40px 64px; }
 .card {
   background: var(--card);
