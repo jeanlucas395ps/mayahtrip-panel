@@ -5,6 +5,7 @@
     <button type="button" [class.ativo]="tela() === 'administradores'" (click)="abrirAdministradores()">{{ t('administradores') }}</button>
     <button type="button" [class.ativo]="tela() === 'usuarios'" (click)="abrirUsuarios()">{{ t('usuarios') }}</button>
     <button type="button" [class.ativo]="tela() === 'lugares'" (click)="abrirLugares()">{{ t('lugares') }}</button>
+    <button type="button" [class.ativo]="tela() === 'viagens'" (click)="abrirViagens()">{{ t('viagens') }}</button>
     <label>
       <select [ngModel]="locale()" (ngModelChange)="locale.set($event)">
         <option value="pt-BR">pt-BR</option>
@@ -290,6 +291,69 @@
             <label>{{ t('midia') }} <input name="midia" type="file" (change)="enviarMidia($event)" /></label>
           </section>
         }
+      }
+    } @else if (tela() === 'viagens') {
+      <div class="row">
+        <h1>{{ t('viagens') }}</h1>
+        <button class="ghost" type="button" (click)="sair()">{{ t('sair') }}</button>
+      </div>
+      @if (erro()) { <p class="erro">{{ erro() }}</p> }
+      <form class="card" (ngSubmit)="carregarViagens()">
+        <label>{{ t('buscar') }} <input name="viagemBusca" [(ngModel)]="viagemBusca" /></label>
+        <label>{{ t('dono') }} <input name="viagemDono" [(ngModel)]="viagemDono" /></label>
+        <label>{{ t('destino') }} <input name="viagemDestino" [(ngModel)]="viagemDestino" /></label>
+        <label>{{ t('todos') }}
+          <select name="viagemStatus" [(ngModel)]="viagemStatus">
+            <option value="">{{ t('todos') }}</option>
+            <option value="draft">{{ t('rascunho') }}</option>
+            <option value="upcoming">{{ t('proxima') }}</option>
+            <option value="happening">{{ t('acontecendo') }}</option>
+            <option value="finished">{{ t('concluida') }}</option>
+          </select>
+        </label>
+        <label>{{ t('sugerido') }}
+          <select name="viagemModo" [(ngModel)]="viagemModo">
+            <option value="">{{ t('todos') }}</option>
+            <option value="suggested">{{ t('sugerido') }}</option>
+            <option value="community">{{ t('comunidade') }}</option>
+            <option value="from_scratch">{{ t('doZero') }}</option>
+          </select>
+        </label>
+        <label>{{ t('cadastroDe') }} <input name="viagemDe" type="date" [(ngModel)]="viagemDe" /></label>
+        <label>{{ t('cadastroAte') }} <input name="viagemAte" type="date" [(ngModel)]="viagemAte" /></label>
+        <label>{{ t('soAtivas') }} <input name="soAtivas" type="checkbox" [(ngModel)]="viagemSoAtivas" /></label>
+        <label>{{ t('soPublicas') }} <input name="soPublicas" type="checkbox" [(ngModel)]="viagemSoPublicas" /></label>
+        <button class="pri" type="submit">{{ t('buscar') }}</button>
+      </form>
+      @for (viagem of viagens(); track viagem.id) {
+        <article class="card">
+          <div class="row">
+            <div>
+              <h2>{{ viagem.title }}</h2>
+              <p class="mut">{{ viagem.ownerName }} · {{ viagem.destinations.join(', ') }} · {{ rotuloStatus(viagem.status) }} · {{ rotuloModo(viagem.startMode) }} · {{ viagem.isActive ? t('ativo') : t('inativo') }} · {{ viagem.visibility === 'public' ? t('publica') : t('privada') }}</p>
+            </div>
+            <button class="ghost" type="button" (click)="verViagem(viagem.id)">{{ t('ficha') }}</button>
+          </div>
+        </article>
+      }
+      @if (fichaViagem(); as ficha) {
+        <section class="card">
+          <h2>{{ ficha.title }}</h2>
+          <p>{{ t('dono') }}: {{ ficha.ownerName }} · {{ ficha.ownerEmail }}</p>
+          <p>{{ t('destino') }}: {{ ficha.destinations.join(', ') }}</p>
+          <p>{{ ficha.startDate }} – {{ ficha.endDate }} · {{ rotuloStatus(ficha.status) }} · {{ rotuloModo(ficha.startMode) }}</p>
+          <p>{{ t('pessoas') }}</p>
+          <ul>
+            @for (pessoa of ficha.participants; track pessoa.displayName) {
+              <li>{{ pessoa.displayName }} · {{ pessoa.role }}</li>
+            }
+          </ul>
+          <div class="row">
+            <button class="ghost" type="button" (click)="ligarViagem(ficha.id, !ficha.isActive)">{{ ficha.isActive ? t('desativar') : t('ativar') }}</button>
+            <button class="ghost" type="button" (click)="publicarViagem(ficha.id, ficha.visibility !== 'public')">{{ ficha.visibility === 'public' ? t('tornarPrivada') : t('publicar') }}</button>
+            <button class="ghost" type="button" (click)="excluirViagem(ficha.id)">{{ t('excluir') }}</button>
+          </div>
+        </section>
       }
     }
   </main>

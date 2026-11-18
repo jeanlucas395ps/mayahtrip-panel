@@ -66,6 +66,21 @@ interface LugarResumo {
   cityName: string | null;
 }
 
+interface ViagemPainel {
+  id: string;
+  title: string;
+  ownerName: string;
+  ownerEmail: string;
+  destinations: string[];
+  startDate: string | null;
+  endDate: string | null;
+  status: string;
+  startMode: string;
+  isActive: boolean;
+  visibility: string;
+  participants: { displayName: string; role: string | null; partyKind: string }[];
+}
+
 interface UsuarioDoApp {
   id: string;
   name: string;
@@ -92,7 +107,7 @@ export class App implements OnInit {
   private readonly http = inject(HttpClient);
   readonly locale = signal<Locale>('pt-BR');
   readonly token = signal(sessionStorage.getItem('painel-token') ?? '');
-  readonly tela = signal<'planos' | 'administradores' | 'usuarios' | 'lugares'>('planos');
+  readonly tela = signal<'planos' | 'administradores' | 'usuarios' | 'lugares' | 'viagens'>('planos');
   readonly planos = signal<Plano[]>([]);
   readonly administradores = signal<Administrador[]>([]);
   readonly erro = signal('');
@@ -113,6 +128,17 @@ export class App implements OnInit {
   filtroAte = '';
   readonly lugares = signal<LugarResumo[]>([]);
   readonly categorias = signal<CategoriaDoLugar[]>([]);
+  readonly viagens = signal<ViagemPainel[]>([]);
+  readonly fichaViagem = signal<ViagemPainel | null>(null);
+  viagemBusca = '';
+  viagemDono = '';
+  viagemDestino = '';
+  viagemStatus = '';
+  viagemModo = '';
+  viagemDe = '';
+  viagemAte = '';
+  viagemSoAtivas = false;
+  viagemSoPublicas = false;
   lugarForm: LugarDoPainel | null = null;
   categoriaSlug = '';
   categoriaNome = '';
@@ -168,6 +194,80 @@ export class App implements OnInit {
     this.editandoAdmin.set(null);
     this.lugarForm = null;
     if (this.token()) this.carregarUsuarios();
+  }
+
+  abrirViagens(): void {
+    this.erro.set('');
+    this.tela.set('viagens');
+    this.editando.set(null);
+    this.editandoAdmin.set(null);
+    this.ficha.set(null);
+    this.lugarForm = null;
+    if (this.token()) this.carregarViagens();
+  }
+
+  carregarViagens(): void {
+    const params: Record<string, string> = {};
+    if (this.viagemBusca.trim()) params['q'] = this.viagemBusca.trim();
+    if (this.viagemDono.trim()) params['owner'] = this.viagemDono.trim();
+    if (this.viagemDestino.trim()) params['destination'] = this.viagemDestino.trim();
+    if (this.viagemStatus) params['status'] = this.viagemStatus;
+    if (this.viagemModo) params['startMode'] = this.viagemModo;
+    if (this.viagemDe) params['from'] = this.viagemDe;
+    if (this.viagemAte) params['to'] = this.viagemAte;
+    if (this.viagemSoAtivas) params['active'] = 'true';
+    if (this.viagemSoPublicas) params['visibility'] = 'public';
+    this.http.get<ViagemPainel[]>(`${API}/trips`, { headers: this.cabecalho(), params }).subscribe({
+      next: (lista) => this.viagens.set(lista),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  verViagem(id: string): void {
+    this.http.get<ViagemPainel>(`${API}/trips/${id}`, { headers: this.cabecalho() }).subscribe({
+      next: (viagem) => this.fichaViagem.set(viagem),
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  ligarViagem(id: string, ativa: boolean): void {
+    this.http.post(`${API}/trips/${id}/${ativa ? 'activate' : 'deactivate'}`, {}, { headers: this.cabecalho() }).subscribe({
+      next: () => {
+        this.carregarViagens();
+        this.verViagem(id);
+      },
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  publicarViagem(id: string, publica: boolean): void {
+    this.http.patch(`${API}/trips/${id}/visibility`, { visibility: publica ? 'public' : 'private' }, { headers: this.cabecalho() }).subscribe({
+      next: () => {
+        this.carregarViagens();
+        this.verViagem(id);
+      },
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  excluirViagem(id: string): void {
+    this.http.delete(`${API}/trips/${id}`, { headers: this.cabecalho() }).subscribe({
+      next: () => {
+        this.fichaViagem.set(null);
+        this.carregarViagens();
+      },
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  rotuloStatus(status: string): string {
+    const mapa: Record<string, string> = { draft: 'rascunho', upcoming: 'proxima', happening: 'acontecendo', finished: 'concluida' };
+    return this.t(mapa[status] ?? status);
+  }
+
+  rotuloModo(modo: string): string {
+    const mapa: Record<string, string> = { suggested: 'sugerido', community: 'comunidade', from_scratch: 'doZero' };
+    return this.t(mapa[modo] ?? modo);
   }
 
   abrirLugares(): void {
