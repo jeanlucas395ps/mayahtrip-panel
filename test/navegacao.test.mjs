@@ -6,6 +6,7 @@ const navegacao = readFileSync(new URL('../src/app/navegacao.ts', import.meta.ur
 const textos = readFileSync(new URL('../src/app/textos.ts', import.meta.url), 'utf8');
 const html = readFileSync(new URL('../src/app/app.html', import.meta.url), 'utf8');
 const aplicacao = readFileSync(new URL('../src/app/app.ts', import.meta.url), 'utf8');
+const estilo = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
 
 const telas = [...navegacao.matchAll(/itens: \[([^\]]+)\]/g)].flatMap((achado) => [...achado[1].matchAll(/'([a-z]+)'/g)].map((item) => item[1]));
 const grupos = [...navegacao.matchAll(/titulo: '([^']+)'/g)].map((achado) => achado[1]);
@@ -27,4 +28,9 @@ test('cada tela do menu existe nos quatro idiomas e na página', () => {
       assert.match(bloco, new RegExp(`${grupo}: '`));
     }
   }
+  assert.match(html, /class="submenu"/);
+  assert.match(html, /class="topo-app"/);
+  assert.equal(estilo.match(/Instrument Serif/g)?.length, 1);
+  assert.match(estilo, /\.porta h1, \.porta \.kick[\s\S]*Instrument Serif/);
+  assert.match(estilo, /\.shell h1, \.shell h2, \.shell \.marca[\s\S]*Plus Jakarta Sans/);
 });

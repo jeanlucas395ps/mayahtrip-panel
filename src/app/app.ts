@@ -38,6 +38,12 @@ interface CategoriaDoLugar {
   translations: { locale: string; name: string }[];
 }
 
+interface CidadeResumo {
+  id: string;
+  name: string;
+  countryName: string | null;
+}
+
 interface LugarDoPainel {
   id: string;
   slug: string;
@@ -49,6 +55,8 @@ interface LugarDoPainel {
   websiteUrl: string | null;
   phone: string | null;
   status: 'active' | 'archived';
+  averageRating: number | null;
+  totalReviews: number;
   translations: { locale: string; name: string | null; description: string | null }[];
   categoryIds: string[];
   addresses: { line1: string | null; neighborhood: string | null; postalCode: string | null; cityId: string | null }[];
@@ -207,6 +215,7 @@ export class App implements OnInit {
   readonly locale = signal<Locale>('pt-BR');
   readonly token = signal(sessionStorage.getItem('painel-token') ?? '');
   readonly grupos = GRUPOS;
+  readonly grupoAberto = signal('gPrincipal');
   readonly tela = signal<TelaPainel>('inicio');
   readonly planos = signal<Plano[]>([]);
   readonly administradores = signal<Administrador[]>([]);
@@ -227,6 +236,9 @@ export class App implements OnInit {
   filtroDe = '';
   filtroAte = '';
   readonly lugares = signal<LugarResumo[]>([]);
+  lugarPagina = 1;
+  lugarTotal = 0;
+  readonly lugarPageSize = 10;
   readonly categorias = signal<CategoriaDoLugar[]>([]);
   readonly viagens = signal<ViagemPainel[]>([]);
   readonly mala = signal<CategoriaDaMala[]>([]);
@@ -243,9 +255,23 @@ export class App implements OnInit {
   viagemSoAtivas = false;
   viagemSoPublicas = false;
   lugarForm: LugarDoPainel | null = null;
+  lugarStatus = '';
+  cidadeBusca = '';
+  readonly cidades = signal<CidadeResumo[]>([]);
+  midiaAtribuicao = '';
+  midiaOrdem: number | null = null;
   categoriaSlug = '';
   categoriaNome = '';
   origemId = '';
+  readonly diasSemana = [
+    { valor: 0, rotulo: 'dom' },
+    { valor: 1, rotulo: 'seg' },
+    { valor: 2, rotulo: 'ter' },
+    { valor: 3, rotulo: 'qua' },
+    { valor: 4, rotulo: 'qui' },
+    { valor: 5, rotulo: 'sex' },
+    { valor: 6, rotulo: 'sab' },
+  ];
   denunciaStatus = '';
   publicacaoBusca = '';
   publicacaoDe = '';
@@ -300,7 +326,7 @@ export class App implements OnInit {
   contaReferencia = '';
 
   ngOnInit(): void {
-    if (this.token()) this.abrirInicio();
+    if (this.token()) this.abrir('inicio');
   }
 
   t(chave: string): string {
@@ -313,7 +339,7 @@ export class App implements OnInit {
       next: (resposta) => {
         sessionStorage.setItem('painel-token', resposta.accessToken);
         this.token.set(resposta.accessToken);
-        this.abrirInicio();
+        this.abrir('inicio');
       },
       error: () => this.erro.set(this.t('erroEntrada')),
     });
@@ -326,7 +352,18 @@ export class App implements OnInit {
     });
   }
 
+  alternarGrupo(titulo: string): void {
+    this.grupoAberto.update((atual) => (atual === titulo ? '' : titulo));
+  }
+
+  grupoDaTela(): string {
+    if (this.tela() === 'lugar') return 'gViagens';
+    return this.grupos.find((grupo) => (grupo.itens as readonly string[]).includes(this.tela()))?.titulo ?? 'gPrincipal';
+  }
+
   abrir(destino: TelaPainel): void {
+    const grupo = this.grupos.find((item) => (item.itens as readonly string[]).includes(destino));
+    if (grupo) this.grupoAberto.set(grupo.titulo);
     const mapa: Record<TelaPainel, () => void> = {
       inicio: () => this.abrirInicio(),
       financeiro: () => this.abrirFinanceiro(),
@@ -334,6 +371,7 @@ export class App implements OnInit {
       usuarios: () => this.abrirUsuarios(),
       administradores: () => this.abrirAdministradores(),
       lugares: () => this.abrirLugares(),
+      lugar: () => this.abrirLugares(),
       viagens: () => this.abrirViagens(),
       mala: () => this.abrirMala(),
       publicacoes: () => this.abrirPublicacoes(),
@@ -572,6 +610,7 @@ export class App implements OnInit {
     this.erro.set('');
     this.confirmando.set('');
     this.tela.set('lugares');
+    this.lugarForm = null;
     this.editando.set(null);
     this.editandoAdmin.set(null);
     this.ficha.set(null);
@@ -579,6 +618,10 @@ export class App implements OnInit {
       this.carregarLugares();
       this.carregarCategorias();
     }
+  }
+
+  get lugarTotalPaginas(): number {
+    return Math.max(1, Math.ceil(this.lugarTotal / this.lugarPageSize));
   }
 
   carregar(): void {
@@ -762,13 +805,58 @@ export class App implements OnInit {
     });
   }
 
-  carregarLugares(): void {
-    const params: Record<string, string> = {};
+  carregarLugares(pagina = this.lugarPagina): void {
+    this.lugarPagina = Math.max(1, pagina);
+    const params: Record<string, string> = { page: String(this.lugarPagina) };
     if (this.busca.trim()) params['q'] = this.busca.trim();
-    this.http.get<LugarResumo[]>(`${API}/places`, { headers: this.cabecalho(), params }).subscribe({
-      next: (lista) => this.lugares.set(lista),
+    if (this.lugarStatus) params['status'] = this.lugarStatus;
+    this.http
+      .get<{ items: LugarResumo[]; total: number; page: number; pageSize: number }>(`${API}/places`, {
+        headers: this.cabecalho(),
+        params,
+      })
+      .subscribe({
+        next: (paginaRes) => {
+          this.lugares.set(paginaRes.items);
+          this.lugarTotal = paginaRes.total;
+          this.lugarPagina = paginaRes.page;
+        },
+        error: (erro: HttpErrorResponse) => this.falha(erro),
+      });
+  }
+
+  buscarLugares(): void {
+    this.carregarLugares(1);
+  }
+
+  paginaLugaresAnterior(): void {
+    if (this.lugarPagina > 1) this.carregarLugares(this.lugarPagina - 1);
+  }
+
+  paginaLugaresProxima(): void {
+    if (this.lugarPagina < this.lugarTotalPaginas) this.carregarLugares(this.lugarPagina + 1);
+  }
+
+  buscarCidades(): void {
+    const params: Record<string, string> = {};
+    if (this.cidadeBusca.trim()) params['q'] = this.cidadeBusca.trim();
+    this.http.get<CidadeResumo[]>(`${API}/cities`, { headers: this.cabecalho(), params }).subscribe({
+      next: (lista) => this.cidades.set(lista),
       error: (erro: HttpErrorResponse) => this.falha(erro),
     });
+  }
+
+  escolherCidade(cidade: CidadeResumo): void {
+    if (!this.lugarForm) return;
+    this.lugarForm.cityId = cidade.id;
+    this.cidadeBusca = `${cidade.name}${cidade.countryName ? ` · ${cidade.countryName}` : ''}`;
+    this.cidades.set([]);
+  }
+
+  limparCidade(): void {
+    if (!this.lugarForm) return;
+    this.lugarForm.cityId = null;
+    this.cidadeBusca = '';
   }
 
   carregarCategorias(): void {
@@ -780,7 +868,11 @@ export class App implements OnInit {
 
   novoLugar(): void {
     this.origemId = '';
+    this.cidadeBusca = '';
+    this.cidades.set([]);
     this.lugarForm = lugarVazio();
+    this.tela.set('lugar');
+    this.carregarCategorias();
   }
 
   abrirLugar(id: string): void {
@@ -788,9 +880,18 @@ export class App implements OnInit {
       next: (lugar) => {
         this.lugarForm = lugar;
         this.origemId = '';
+        this.cidadeBusca = '';
+        this.cidades.set([]);
+        this.tela.set('lugar');
+        this.carregarCategorias();
       },
       error: (erro: HttpErrorResponse) => this.falha(erro),
     });
+  }
+
+  voltarParaLugares(): void {
+    this.lugarForm = null;
+    this.abrirLugares();
   }
 
   salvarLugar(): void {
@@ -821,6 +922,7 @@ export class App implements OnInit {
       next: (gravado) => {
         this.erro.set('');
         this.lugarForm = gravado;
+        this.tela.set('lugar');
         this.carregarLugares();
       },
       error: (erro: HttpErrorResponse) => this.falha(erro),
@@ -905,10 +1007,48 @@ export class App implements OnInit {
     if (!lugar?.id || !arquivo) return;
     const dados = new FormData();
     dados.set('arquivo', arquivo);
-    this.http.post(`${API}/places/${lugar.id}/media`, dados, { headers: this.cabecalho() }).subscribe({
+    const params: Record<string, string> = {};
+    if (this.midiaAtribuicao.trim()) params['atribuicao'] = this.midiaAtribuicao.trim();
+    if (this.midiaOrdem !== null && Number.isFinite(this.midiaOrdem)) params['ordem'] = String(this.midiaOrdem);
+    this.http.post(`${API}/places/${lugar.id}/media`, dados, { headers: this.cabecalho(), params }).subscribe({
+      next: () => {
+        this.midiaAtribuicao = '';
+        this.midiaOrdem = null;
+        this.abrirLugar(lugar.id);
+      },
+      error: (erro: HttpErrorResponse) => this.falha(erro),
+    });
+  }
+
+  removerMidia(mediaId: string): void {
+    const lugar = this.lugarForm;
+    if (!lugar?.id) return;
+    this.http.delete(`${API}/places/${lugar.id}/media/${mediaId}`, { headers: this.cabecalho() }).subscribe({
       next: () => this.abrirLugar(lugar.id),
       error: (erro: HttpErrorResponse) => this.falha(erro),
     });
+  }
+
+  metadataTexto(referencia: { providerMetadata: Record<string, unknown> | null }): string {
+    if (!referencia.providerMetadata) return '';
+    try {
+      return JSON.stringify(referencia.providerMetadata);
+    } catch {
+      return '';
+    }
+  }
+
+  atualizarMetadata(referencia: { providerMetadata: Record<string, unknown> | null }, bruto: string): void {
+    const texto = bruto.trim();
+    if (!texto) {
+      referencia.providerMetadata = null;
+      return;
+    }
+    try {
+      referencia.providerMetadata = JSON.parse(texto) as Record<string, unknown>;
+    } catch {
+      this.erro.set(this.t('jsonInvalido'));
+    }
   }
 
   abrirCupons(): void {
@@ -1467,6 +1607,8 @@ function lugarVazio(): LugarDoPainel {
     websiteUrl: '',
     phone: '',
     status: 'active',
+    averageRating: null,
+    totalReviews: 0,
     translations: [{ locale: 'pt-BR', name: '', description: '' }],
     categoryIds: [],
     addresses: [],
