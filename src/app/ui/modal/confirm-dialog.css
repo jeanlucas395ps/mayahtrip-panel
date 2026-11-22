@@ -1,0 +1,29 @@
+:host {
+  display: block;
+  background: var(--cor-superficie);
+  border-radius: var(--raio-cartao);
+  padding: var(--esp-24);
+  width: min(420px, 92vw);
+  box-shadow: var(--sombra-flutuante);
+}
+
+.confirmacao__titulo {
+  margin: 0 0 var(--esp-8);
+  font-size: var(--tipo-h2-tam);
+  font-weight: 800;
+  letter-spacing: var(--tipo-h2-tracking);
+  color: var(--cor-texto-primario);
+}
+
+.confirmacao__mensagem {
+  margin: 0 0 var(--esp-24);
+  color: var(--cor-texto-secundario);
+  font-size: var(--tipo-corpo-tam);
+  line-height: var(--tipo-corpo-altura);
+}
+
+.confirmacao__acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--esp-10);
+}

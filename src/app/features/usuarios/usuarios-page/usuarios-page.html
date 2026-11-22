@@ -1,0 +1,103 @@
+<div class="pagina__topo">
+  <div>
+    <h1 class="pagina__titulo">{{ i18n.t('usuarios.titulo') }}</h1>
+    <p class="pagina__subtitulo">{{ i18n.t('usuarios.subtitulo') }}</p>
+  </div>
+</div>
+
+<mt-card class="filtros">
+  <form class="filtros__grade" (ngSubmit)="carregar()">
+    <label class="campo-filtro campo-filtro--largo">
+      <span>{{ i18n.t('comum.buscar') }}</span>
+      <input type="text" [(ngModel)]="filtro.q" name="q" [placeholder]="i18n.t('usuarios.buscarPlaceholder')" />
+    </label>
+    <label class="campo-filtro">
+      <span>{{ i18n.t('usuarios.filtroAtivo') }}</span>
+      <select [(ngModel)]="filtro.ativo" name="ativo">
+        <option value="">{{ i18n.t('usuarios.todos') }}</option>
+        <option value="true">{{ i18n.t('usuarios.sim') }}</option>
+        <option value="false">{{ i18n.t('usuarios.nao') }}</option>
+      </select>
+    </label>
+    <label class="campo-filtro">
+      <span>{{ i18n.t('usuarios.filtroVerificado') }}</span>
+      <select [(ngModel)]="filtro.verificado" name="verificado">
+        <option value="">{{ i18n.t('usuarios.todos') }}</option>
+        <option value="true">{{ i18n.t('usuarios.sim') }}</option>
+        <option value="false">{{ i18n.t('usuarios.nao') }}</option>
+      </select>
+    </label>
+    <label class="campo-filtro">
+      <span>{{ i18n.t('usuarios.filtroEntrada') }}</span>
+      <select [(ngModel)]="filtro.entrada" name="entrada">
+        <option value="">{{ i18n.t('usuarios.todos') }}</option>
+        <option value="google">{{ i18n.t('usuarios.google') }}</option>
+        <option value="senha">{{ i18n.t('usuarios.senha') }}</option>
+      </select>
+    </label>
+    <label class="campo-filtro">
+      <span>{{ i18n.t('usuarios.filtroPais') }}</span>
+      <input type="text" [(ngModel)]="filtro.pais" name="pais" />
+    </label>
+    <label class="campo-filtro">
+      <span>{{ i18n.t('usuarios.filtroCadastroDe') }}</span>
+      <input type="date" [(ngModel)]="filtro.cadastroDe" name="cadastroDe" />
+    </label>
+    <label class="campo-filtro">
+      <span>{{ i18n.t('usuarios.filtroCadastroAte') }}</span>
+      <input type="date" [(ngModel)]="filtro.cadastroAte" name="cadastroAte" />
+    </label>
+    <mt-button tipo="submit">{{ i18n.t('comum.filtrar') }}</mt-button>
+  </form>
+</mt-card>
+
+<mt-card [semPadding]="true">
+  <mt-data-table [colunas]="colunas" [linhas]="usuarios()" [carregando]="carregando()" [tituloVazio]="i18n.t('usuarios.vazioTitulo')" (linhaClicada)="abrirFicha($event)">
+    <ng-template #acoesLinha let-usuario>
+      <mt-badge [tom]="tomDoStatus(usuario.status)">{{ rotuloDoStatus(usuario.status) }}</mt-badge>
+    </ng-template>
+  </mt-data-table>
+</mt-card>
+
+@if (ficha(); as pessoa) {
+  <div class="sobreposicao" (click)="fecharFicha()"></div>
+  <aside class="ficha">
+    <div class="ficha__topo">
+      <h2>{{ i18n.t('usuarios.fichaTitulo') }}</h2>
+      <mt-icon-button [rotulo]="i18n.t('usuarios.fecharFicha')" (click)="fecharFicha()">
+        <mt-icon nome="fechar" />
+      </mt-icon-button>
+    </div>
+
+    <p class="ficha__nome">{{ pessoa.name }}</p>
+    <p class="ficha__username">&#64;{{ pessoa.username }}</p>
+
+    @if (pessoa.deleted) {
+      <mt-badge tom="erro">{{ i18n.t('usuarios.excluido') }}</mt-badge>
+    } @else {
+      <mt-badge [tom]="tomDoStatus(pessoa.status)">{{ rotuloDoStatus(pessoa.status) }}</mt-badge>
+    }
+
+    <dl class="ficha__campos">
+      <div><dt>{{ i18n.t('usuarios.colunaEmail') }}</dt><dd>{{ pessoa.email }}</dd></div>
+      <div><dt>{{ i18n.t('usuarios.colunaPais') }}</dt><dd>{{ pessoa.countryName ?? '—' }}</dd></div>
+      <div><dt>{{ i18n.t('usuarios.fichaIdioma') }}</dt><dd>{{ pessoa.locale }}</dd></div>
+      <div><dt>{{ i18n.t('usuarios.fichaMoeda') }}</dt><dd>{{ pessoa.currency }}</dd></div>
+      <div><dt>{{ i18n.t('usuarios.colunaPlano') }}</dt><dd>{{ pessoa.planCode }}</dd></div>
+      <div><dt>{{ i18n.t('usuarios.fichaCadastro') }}</dt><dd>{{ pessoa.createdAt | date: 'dd/MM/yyyy' }}</dd></div>
+      <div><dt>{{ i18n.t('usuarios.fichaVerificado') }}</dt><dd>{{ pessoa.emailVerified ? i18n.t('usuarios.sim') : i18n.t('usuarios.nao') }}</dd></div>
+      <div><dt>{{ i18n.t('usuarios.fichaEntrada') }}</dt><dd>{{ pessoa.entrada }}</dd></div>
+    </dl>
+
+    <div class="ficha__acoes">
+      @if (pessoa.deleted) {
+        <mt-button [largoTotal]="true" (click)="restaurar(pessoa)">{{ i18n.t('usuarios.restaurar') }}</mt-button>
+      } @else {
+        <mt-button variante="contorno" [largoTotal]="true" (click)="alternarAtivo(pessoa)">
+          {{ pessoa.status === 'active' ? i18n.t('usuarios.desativar') : i18n.t('usuarios.ativar') }}
+        </mt-button>
+        <mt-button variante="perigo" [largoTotal]="true" (click)="excluir(pessoa)">{{ i18n.t('usuarios.excluir') }}</mt-button>
+      }
+    </div>
+  </aside>
+}

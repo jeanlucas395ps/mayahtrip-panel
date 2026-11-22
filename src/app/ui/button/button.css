@@ -1,0 +1,123 @@
+:host {
+  display: inline-flex;
+}
+
+.botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--esp-8);
+  height: 40px;
+  padding: 0 var(--esp-18);
+  border-radius: var(--raio-pilula);
+  border: 1px solid transparent;
+  font-family: var(--fonte-corpo);
+  font-size: var(--tipo-sm-tam);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--duracao-padrao) var(--easing-padrao),
+    border-color var(--duracao-padrao) var(--easing-padrao),
+    transform var(--duracao-rapida) var(--easing-padrao),
+    box-shadow var(--duracao-padrao) var(--easing-padrao);
+}
+
+.botao:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.botao:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.botao--lg {
+  height: 50px;
+  padding: 0 var(--esp-24);
+  font-size: var(--tipo-corpo-tam);
+}
+
+.botao--primario {
+  background: var(--cor-acao);
+  color: var(--cor-texto-sobre-acao);
+}
+.botao--primario:hover:not(:disabled) {
+  background: var(--cor-acao-hover);
+}
+.botao--primario:focus-visible {
+  box-shadow: var(--anel-foco);
+}
+
+.botao--acento {
+  background: var(--cor-acento);
+  color: var(--cor-texto-sobre-lima);
+}
+.botao--acento:hover:not(:disabled) {
+  background: var(--cor-acento-hover);
+}
+
+.botao--contorno {
+  background: var(--cor-superficie);
+  border-color: var(--cor-borda);
+  color: var(--cor-texto-primario);
+}
+.botao--contorno:hover:not(:disabled) {
+  background: var(--cor-superficie-hover);
+  border-color: var(--mt-ardosia-clara);
+}
+
+.botao--fantasma {
+  background: transparent;
+  color: var(--cor-acao);
+  padding-inline: var(--esp-10);
+}
+.botao--fantasma:hover:not(:disabled) {
+  background: var(--cor-acao-fundo-suave);
+}
+
+.botao--perigo {
+  background: var(--cor-superficie);
+  border-color: var(--cor-borda);
+  color: var(--mt-erro);
+}
+.botao--perigo:hover:not(:disabled) {
+  background: var(--cor-erro-fundo);
+  border-color: var(--mt-erro);
+}
+
+.botao--largo {
+  width: 100%;
+}
+
+.botao__conteudo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-8);
+}
+
+.botao--carregando .botao__conteudo {
+  opacity: 0.6;
+}
+
+.botao__spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  opacity: 0.85;
+  animation: girar 0.7s linear infinite;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .botao__spinner {
+    animation-duration: 1.4s;
+  }
+}

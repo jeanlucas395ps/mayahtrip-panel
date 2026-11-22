@@ -1,0 +1,217 @@
+@if (naoEncontrado()) {
+  <mt-card>
+    <mt-empty-state [titulo]="i18n.t('lugares.vazioTitulo')">
+      <a acao [routerLink]="['/lugares']">
+        <mt-button variante="contorno">{{ i18n.t('geo.voltarParaLista') }}</mt-button>
+      </a>
+    </mt-empty-state>
+  </mt-card>
+} @else {
+  <div class="pagina__topo">
+    <h1 class="pagina__titulo">{{ ehNovo ? i18n.t('lugares.novoTitulo') : (lugar()?.name ?? '') }}</h1>
+    @if (lugar(); as l) {
+      <mt-badge [tom]="l.status === 'active' ? 'sucesso' : 'neutro'">{{ i18n.t('lugares.status' + (l.status === 'active' ? 'Active' : 'Archived')) }}</mt-badge>
+      @if (l.totalReviews > 0) {
+        <span class="avaliacoes">★ {{ l.averageRating }} ({{ l.totalReviews }} {{ i18n.t('lugares.avaliacoes') }})</span>
+      }
+    }
+  </div>
+
+  <form [formGroup]="formulario" (ngSubmit)="salvar()" novalidate>
+    <mt-card class="secao">
+      <h2 class="secao__titulo">{{ i18n.t('lugares.secaoBasico') }}</h2>
+      <div class="grade-2">
+        <mt-form-field [rotulo]="i18n.t('lugares.campoNome')" [obrigatorio]="true">
+          <input type="text" formControlName="name" />
+        </mt-form-field>
+        <mt-form-field [rotulo]="i18n.t('lugares.campoSlug')" [obrigatorio]="true">
+          <input type="text" formControlName="slug" />
+        </mt-form-field>
+      </div>
+
+      <mt-form-field [rotulo]="i18n.t('lugares.campoDescricao')">
+        <textarea formControlName="description"></textarea>
+      </mt-form-field>
+
+      <mt-form-field [rotulo]="i18n.t('lugares.campoCidade')">
+        <div class="seletor-cidade">
+          @if (cidadeEscolhida(); as c) {
+            <span class="chip">{{ c.nome }} <button type="button" (click)="limparCidade()">×</button></span>
+          } @else if (cidadeIdAtualSemNome(); as idAtual) {
+            <span class="chip chip--neutro">ID {{ idAtual }} <button type="button" (click)="limparCidade()">×</button></span>
+          } @else {
+            <input type="text" [value]="buscaCidade()" (input)="aoDigitarCidade($any($event.target).value)" placeholder="Buscar cidade" />
+            @if (candidatosCidade().length) {
+              <ul class="lista-candidatos">
+                @for (c of candidatosCidade(); track c.id) {
+                  <li><button type="button" (click)="escolherCidade(c)">{{ c.name }}{{ c.countryName ? ' · ' + c.countryName : '' }}</button></li>
+                }
+              </ul>
+            }
+          }
+        </div>
+      </mt-form-field>
+
+      <div class="grade-2">
+        <mt-form-field [rotulo]="i18n.t('lugares.campoLatitude')">
+          <input type="number" formControlName="latitude" step="0.0001" />
+        </mt-form-field>
+        <mt-form-field [rotulo]="i18n.t('lugares.campoLongitude')">
+          <input type="number" formControlName="longitude" step="0.0001" />
+        </mt-form-field>
+      </div>
+      <div class="grade-2">
+        <mt-form-field [rotulo]="i18n.t('lugares.campoSite')">
+          <input type="text" formControlName="websiteUrl" />
+        </mt-form-field>
+        <mt-form-field [rotulo]="i18n.t('lugares.campoTelefone')">
+          <input type="text" formControlName="phone" />
+        </mt-form-field>
+      </div>
+      <mt-form-field [rotulo]="i18n.t('lugares.campoStatus')">
+        <select formControlName="status">
+          <option value="active">{{ i18n.t('lugares.statusActive') }}</option>
+          <option value="archived">{{ i18n.t('lugares.statusArchived') }}</option>
+        </select>
+      </mt-form-field>
+
+      <mt-button tipo="submit">{{ i18n.t('comum.salvar') }}</mt-button>
+    </mt-card>
+
+    <mt-card class="secao">
+      <h2 class="secao__titulo">{{ i18n.t('lugares.secaoTraducoes') }}</h2>
+      @for (grupo of formulario.controls.translations.controls; track $index) {
+        <div class="linha-traducao" [formGroup]="grupo">
+          <span class="rotulo-locale">{{ grupo.controls.locale.value }}</span>
+          <input type="text" formControlName="name" [placeholder]="i18n.t('lugares.campoNome')" />
+          <input type="text" formControlName="description" [placeholder]="i18n.t('lugares.campoDescricao')" />
+        </div>
+      }
+    </mt-card>
+
+    <mt-card class="secao">
+      <h2 class="secao__titulo">{{ i18n.t('lugares.secaoCategorias') }}</h2>
+      <div class="categorias">
+        @for (categoria of categorias(); track categoria.id) {
+          <label class="categoria">
+            <input
+              type="checkbox"
+              [checked]="formulario.controls.categoryIds.value.includes(categoria.id)"
+              (change)="alternarCategoria(categoria.id)"
+            />
+            {{ nomeDaCategoria(categoria) }}
+          </label>
+        }
+      </div>
+    </mt-card>
+
+    <mt-card class="secao">
+      <div class="secao__cabecalho">
+        <h2 class="secao__titulo">{{ i18n.t('lugares.secaoEnderecos') }}</h2>
+        <mt-button variante="fantasma" tipo="button" (click)="adicionarEndereco()">{{ i18n.t('lugares.adicionar') }}</mt-button>
+      </div>
+      @for (grupo of formulario.controls.addresses.controls; track $index) {
+        <div class="linha-coleta" [formGroup]="grupo">
+          <input type="text" formControlName="line1" [placeholder]="i18n.t('lugares.campoLinha1')" />
+          <input type="text" formControlName="neighborhood" [placeholder]="i18n.t('lugares.campoBairro')" />
+          <input type="text" formControlName="postalCode" [placeholder]="i18n.t('lugares.campoCep')" />
+          <button type="button" class="remover" (click)="removerEndereco($index)">×</button>
+        </div>
+      }
+    </mt-card>
+
+    <mt-card class="secao">
+      <div class="secao__cabecalho">
+        <h2 class="secao__titulo">{{ i18n.t('lugares.secaoHorarios') }}</h2>
+        <mt-button variante="fantasma" tipo="button" (click)="adicionarHorario()">{{ i18n.t('lugares.adicionar') }}</mt-button>
+      </div>
+      @for (grupo of formulario.controls.openingHours.controls; track $index) {
+        <div class="linha-horario" [formGroup]="grupo">
+          <select formControlName="weekday">
+            @for (dia of diasSemana; track dia.valor) {
+              <option [value]="dia.valor">{{ i18n.t(dia.chave) }}</option>
+            }
+          </select>
+          <input type="time" formControlName="openingTime" />
+          <input type="time" formControlName="closingTime" />
+          <label class="check-inline"><input type="checkbox" formControlName="isClosed" /> {{ i18n.t('lugares.campoFechado') }}</label>
+          <button type="button" class="remover" (click)="removerHorario($index)">×</button>
+        </div>
+      }
+    </mt-card>
+
+    <mt-card class="secao">
+      <div class="secao__cabecalho">
+        <h2 class="secao__titulo">{{ i18n.t('lugares.secaoPrecos') }}</h2>
+        <mt-button variante="fantasma" tipo="button" (click)="adicionarPreco()">{{ i18n.t('lugares.adicionar') }}</mt-button>
+      </div>
+      @for (grupo of formulario.controls.prices.controls; track $index) {
+        <div class="linha-coleta" [formGroup]="grupo">
+          <input type="text" formControlName="currency" [placeholder]="i18n.t('lugares.campoMoeda')" maxlength="3" />
+          <input type="number" formControlName="priceLevel" [placeholder]="i18n.t('lugares.campoNivelPreco')" min="0" max="4" />
+          <input type="number" formControlName="minimumPrice" [placeholder]="i18n.t('lugares.campoPrecoMin')" />
+          <input type="number" formControlName="maximumPrice" [placeholder]="i18n.t('lugares.campoPrecoMax')" />
+          <button type="button" class="remover" (click)="removerPreco($index)">×</button>
+        </div>
+      }
+    </mt-card>
+
+    <mt-card class="secao">
+      <div class="secao__cabecalho">
+        <h2 class="secao__titulo">{{ i18n.t('lugares.secaoVisita') }}</h2>
+        <mt-button variante="fantasma" tipo="button" (click)="adicionarVisita()">{{ i18n.t('lugares.adicionar') }}</mt-button>
+      </div>
+      @for (grupo of formulario.controls.visitInformation.controls; track $index) {
+        <div class="linha-coleta" [formGroup]="grupo">
+          <input type="number" formControlName="recommendedDurationMinutes" [placeholder]="i18n.t('lugares.campoDuracaoMin')" />
+          <input type="text" formControlName="bestTimeToVisit" [placeholder]="i18n.t('lugares.campoMelhorHorario')" />
+          <input type="text" formControlName="accessibilityInformation" [placeholder]="i18n.t('lugares.campoAcessibilidade')" />
+          <button type="button" class="remover" (click)="removerVisita($index)">×</button>
+        </div>
+      }
+    </mt-card>
+
+    <mt-card class="secao">
+      <div class="secao__cabecalho">
+        <h2 class="secao__titulo">{{ i18n.t('lugares.secaoReferencias') }}</h2>
+        <mt-button variante="fantasma" tipo="button" (click)="adicionarReferencia()">{{ i18n.t('lugares.adicionar') }}</mt-button>
+      </div>
+      @for (grupo of formulario.controls.externalReferences.controls; track $index) {
+        <div class="linha-coleta" [formGroup]="grupo">
+          <input type="text" formControlName="provider" [placeholder]="i18n.t('lugares.campoProvedor')" />
+          <input type="text" formControlName="externalId" [placeholder]="i18n.t('lugares.campoIdExterno')" />
+          <input type="text" formControlName="externalUrl" [placeholder]="i18n.t('lugares.campoUrlExterna')" />
+          <button type="button" class="remover" (click)="removerReferencia($index)">×</button>
+        </div>
+      }
+    </mt-card>
+  </form>
+
+  @if (!ehNovo) {
+    <mt-card class="secao">
+      <h2 class="secao__titulo">{{ i18n.t('lugares.secaoMidia') }}</h2>
+      <div class="midias">
+        @for (midia of lugar()?.media ?? []; track midia.id) {
+          <div class="midia">
+            <img [src]="urlMidia(midia.id)" [alt]="midia.attribution ?? ''" />
+            <button type="button" class="midia__remover" (click)="removerMidia(midia.id)">×</button>
+          </div>
+        }
+        <label class="midia midia--upload">
+          {{ enviandoMidia() ? i18n.t('comum.carregando') : i18n.t('lugares.enviarMidia') }}
+          <input type="file" accept="image/jpeg,image/png,image/webp,video/mp4" (change)="enviarMidia($event)" [disabled]="enviandoMidia()" hidden />
+        </label>
+      </div>
+    </mt-card>
+
+    <mt-card class="secao">
+      <div class="acoes-finais">
+        <mt-button variante="contorno" (click)="arquivar()">{{ i18n.t('lugares.arquivar') }}</mt-button>
+        <div class="unificar">
+          <input type="text" [value]="origemUnificar()" (input)="origemUnificar.set($any($event.target).value)" [placeholder]="i18n.t('lugares.unificarDica')" />
+          <mt-button variante="perigo" (click)="unificar()">{{ i18n.t('lugares.unificar') }}</mt-button>
+        </div>
+      </div>
+    </mt-card>
+  }
+}

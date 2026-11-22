@@ -1,0 +1,24 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.migalha {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-8);
+  font-size: var(--tipo-sm-tam);
+  color: var(--cor-texto-terciario);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.migalha__marca {
+  font-weight: 600;
+}
+
+.migalha__atual {
+  color: var(--cor-texto-primario);
+  font-weight: 700;
+}

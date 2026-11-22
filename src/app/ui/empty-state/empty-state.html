@@ -1,0 +1,6 @@
+<div class="vazio__icone"><ng-content select="[icone]" /></div>
+<p class="vazio__titulo">{{ titulo() }}</p>
+@if (descricao()) {
+  <p class="vazio__descricao">{{ descricao() }}</p>
+}
+<div class="vazio__acao"><ng-content select="[acao]" /></div>

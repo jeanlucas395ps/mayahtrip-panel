@@ -1,0 +1,62 @@
+:host {
+  position: fixed;
+  inset: auto var(--esp-24) var(--esp-24) auto;
+  z-index: var(--z-toast);
+  pointer-events: none;
+}
+
+.pilha {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-10);
+  align-items: flex-end;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-16);
+  background: var(--mt-tinta);
+  color: #fff;
+  padding: var(--esp-12) var(--esp-16);
+  border-radius: var(--raio-campo);
+  box-shadow: var(--sombra-flutuante);
+  font-size: var(--tipo-sm-tam);
+  font-weight: 600;
+  pointer-events: auto;
+  animation: entrar var(--duracao-padrao) var(--easing-padrao);
+}
+
+.toast--sucesso {
+  background: var(--mt-roxo-profundo);
+}
+
+.toast--erro {
+  background: var(--mt-erro);
+}
+
+.toast__acao {
+  border: 0;
+  background: transparent;
+  color: var(--mt-lima);
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+@keyframes entrar {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}

@@ -1,0 +1,80 @@
+@if (naoEncontrado()) {
+  <mt-card>
+    <mt-empty-state [titulo]="i18n.t('geo.naoEncontrado')">
+      <a acao [routerLink]="['/geografia/cidades']">
+        <mt-button variante="contorno">{{ i18n.t('geo.voltarParaLista') }}</mt-button>
+      </a>
+    </mt-empty-state>
+  </mt-card>
+} @else {
+  <div class="pagina__topo">
+    <h1 class="pagina__titulo">{{ ehNovo ? i18n.t('geo.novaCidade') : (cidade()?.name ?? '') }}</h1>
+  </div>
+
+  <div class="grade">
+    <mt-card class="cartao-capa">
+      <span class="rotulo">{{ i18n.t('geo.capa') }}</span>
+      @if (urlCapa(); as url) {
+        <img class="capa" [src]="url" [alt]="cidade()?.name" />
+      } @else {
+        <div class="capa capa--vazia">{{ i18n.t('geo.semCapa') }}</div>
+      }
+      @if (!ehNovo) {
+        <label class="botao-upload">
+          {{ enviandoCapa() ? i18n.t('comum.carregando') : (cidade()?.coverStorageKey ? i18n.t('geo.trocarCapa') : i18n.t('geo.enviarCapa')) }}
+          <input type="file" accept="image/jpeg,image/png,image/webp" (change)="enviarCapa($event)" [disabled]="enviandoCapa()" hidden />
+        </label>
+        <p class="dica">{{ i18n.t('geo.capaFormato') }}</p>
+      }
+    </mt-card>
+
+    <mt-card class="cartao-formulario">
+      <form [formGroup]="formulario" (ngSubmit)="salvar()" novalidate>
+        <mt-form-field [rotulo]="i18n.t('geo.campoNome')" [obrigatorio]="true">
+          <input type="text" formControlName="name" />
+        </mt-form-field>
+
+        <mt-form-field [rotulo]="i18n.t('geo.campoPais')" [obrigatorio]="true">
+          <div class="seletor-pais">
+            @if (paisEscolhido(); as pais) {
+              <span class="chip-pais">
+                {{ pais.name }}
+                <button type="button" (click)="paisEscolhido.set(null)">×</button>
+              </span>
+            } @else {
+              <input type="text" [value]="buscaPais()" (input)="aoDigitarPais($any($event.target).value)" [placeholder]="i18n.t('geo.buscarPais')" />
+              @if (candidatosPais().length) {
+                <ul class="lista-candidatos">
+                  @for (candidato of candidatosPais(); track candidato.id) {
+                    <li>
+                      <button type="button" (click)="escolherPais(candidato)">{{ candidato.name }}</button>
+                    </li>
+                  }
+                </ul>
+              }
+            }
+          </div>
+        </mt-form-field>
+
+        <div class="linha">
+          <mt-form-field [rotulo]="i18n.t('geo.campoLatitude')">
+            <input type="number" formControlName="latitude" step="0.0001" />
+          </mt-form-field>
+          <mt-form-field [rotulo]="i18n.t('geo.campoLongitude')">
+            <input type="number" formControlName="longitude" step="0.0001" />
+          </mt-form-field>
+        </div>
+
+        <label class="check">
+          <input type="checkbox" formControlName="isPopular" />
+          {{ i18n.t('geo.campoPopular') }}
+        </label>
+        <mt-form-field [rotulo]="i18n.t('geo.campoOrdemPopular')">
+          <input type="number" formControlName="popularSort" />
+        </mt-form-field>
+
+        <mt-button tipo="submit">{{ i18n.t('comum.salvar') }}</mt-button>
+      </form>
+    </mt-card>
+  </div>
+}

@@ -1,0 +1,33 @@
+:host {
+  display: inline-flex;
+}
+
+.botao-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--raio-botao-icone);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--cor-texto-secundario);
+  cursor: pointer;
+  transition:
+    background-color var(--duracao-padrao) var(--easing-padrao),
+    color var(--duracao-padrao) var(--easing-padrao);
+}
+
+.botao-icone:hover {
+  background: var(--cor-superficie-hover);
+  color: var(--cor-texto-primario);
+}
+
+.botao-icone--ativo {
+  background: var(--cor-acao-fundo-suave);
+  color: var(--cor-acao);
+}
+
+.botao-icone:active {
+  transform: scale(0.94);
+}

@@ -1,0 +1,66 @@
+:host {
+  display: block;
+}
+
+.campo {
+  display: grid;
+  gap: var(--esp-6);
+}
+
+.campo__rotulo {
+  font-size: var(--tipo-xs-tam);
+  font-weight: 700;
+  color: var(--cor-texto-secundario);
+}
+
+.campo__obrigatorio {
+  color: var(--mt-erro);
+}
+
+.campo__controle ::ng-deep input,
+.campo__controle ::ng-deep select,
+.campo__controle ::ng-deep textarea {
+  width: 100%;
+  height: 44px;
+  padding: 0 var(--esp-14);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-campo);
+  background: var(--cor-superficie);
+  color: var(--cor-texto-primario);
+  font-family: var(--fonte-corpo);
+  font-size: var(--tipo-corpo-tam);
+  outline: none;
+  transition:
+    border-color var(--duracao-padrao) var(--easing-padrao),
+    box-shadow var(--duracao-padrao) var(--easing-padrao);
+}
+
+.campo__controle ::ng-deep textarea {
+  height: auto;
+  min-height: 88px;
+  padding-top: var(--esp-12);
+  resize: vertical;
+}
+
+.campo__controle ::ng-deep input:focus,
+.campo__controle ::ng-deep select:focus,
+.campo__controle ::ng-deep textarea:focus {
+  border-color: var(--cor-borda-foco);
+  box-shadow: var(--anel-foco);
+}
+
+.campo__controle--erro ::ng-deep input,
+.campo__controle--erro ::ng-deep select,
+.campo__controle--erro ::ng-deep textarea {
+  border-color: var(--mt-erro);
+}
+
+.campo__mensagem {
+  font-size: var(--tipo-xs-tam);
+  color: var(--cor-texto-terciario);
+}
+
+.campo__mensagem--erro {
+  color: var(--mt-erro);
+  font-weight: 600;
+}

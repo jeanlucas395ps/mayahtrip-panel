@@ -1,0 +1,7 @@
+<div class="migalha">
+  <span class="migalha__marca">{{ i18n.t('shell.marca') }}</span>
+  @if (tituloChave(); as chave) {
+    <span class="migalha__separador" aria-hidden="true">/</span>
+    <strong class="migalha__atual">{{ i18n.t(chave) }}</strong>
+  }
+</div>

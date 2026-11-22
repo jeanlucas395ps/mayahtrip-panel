@@ -1,0 +1,33 @@
+:host {
+  display: block;
+}
+
+.pagina__topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--esp-16);
+  margin-bottom: var(--esp-20);
+}
+
+.pagina__titulo {
+  margin: 0;
+  font-size: var(--tipo-h1-tam);
+  font-weight: var(--tipo-h1-peso);
+  letter-spacing: var(--tipo-h1-tracking);
+  color: var(--cor-texto-primario);
+}
+
+.pagina__subtitulo {
+  margin: var(--esp-4) 0 0;
+  color: var(--cor-texto-secundario);
+  font-size: var(--tipo-sm-tam);
+}
+
+.linha-acoes {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-10);
+  justify-content: flex-end;
+}

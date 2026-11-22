@@ -1,0 +1,9 @@
+<div class="paginacao">
+  <button type="button" class="paginacao__botao" [disabled]="!podeVoltar()" (click)="anterior.emit()">
+    {{ i18n.t('comum.paginaAnterior') }}
+  </button>
+  <span class="paginacao__info">{{ pagina() }} {{ i18n.t('comum.paginaDe') }} {{ totalPaginas() }}</span>
+  <button type="button" class="paginacao__botao" [disabled]="!podeAvancar()" (click)="proxima.emit()">
+    {{ i18n.t('comum.proximaPagina') }}
+  </button>
+</div>

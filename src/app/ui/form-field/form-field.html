@@ -1,0 +1,16 @@
+<label class="campo">
+  <span class="campo__rotulo">
+    {{ rotulo() }}
+    @if (obrigatorio()) {
+      <span class="campo__obrigatorio" aria-hidden="true">*</span>
+    }
+  </span>
+  <div class="campo__controle" [class.campo__controle--erro]="!!erro()">
+    <ng-content />
+  </div>
+  @if (erro()) {
+    <span class="campo__mensagem campo__mensagem--erro">{{ erro() }}</span>
+  } @else if (dica()) {
+    <span class="campo__mensagem">{{ dica() }}</span>
+  }
+</label>

@@ -1,0 +1,17 @@
+:host {
+  display: block;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda-suave);
+  border-radius: var(--raio-cartao);
+  padding: var(--esp-20);
+}
+
+:host(.mt-card--sem-padding) {
+  padding: 0;
+  overflow: hidden;
+}
+
+:host(.mt-card--elevado) {
+  border-color: transparent;
+  box-shadow: var(--sombra-cartao);
+}

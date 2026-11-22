@@ -2,10 +2,13 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-const navegacao = readFileSync(new URL('../src/app/navegacao.ts', import.meta.url), 'utf8');
-const textos = readFileSync(new URL('../src/app/textos.ts', import.meta.url), 'utf8');
-const html = readFileSync(new URL('../src/app/app.html', import.meta.url), 'utf8');
-const aplicacao = readFileSync(new URL('../src/app/app.ts', import.meta.url), 'utf8');
+// Este teste guarda a consistência do painel legado (`src/app/legacy/`), que
+// segue ativo em `/legado` até cada tela migrar para o painel novo — ver
+// `plan/reconstrucao-painel-plan.md`.
+const navegacao = readFileSync(new URL('../src/app/legacy/navegacao.ts', import.meta.url), 'utf8');
+const textos = readFileSync(new URL('../src/app/legacy/textos.ts', import.meta.url), 'utf8');
+const html = readFileSync(new URL('../src/app/legacy/app.html', import.meta.url), 'utf8');
+const aplicacao = readFileSync(new URL('../src/app/legacy/app.ts', import.meta.url), 'utf8');
 const estilo = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
 
 const telas = [...navegacao.matchAll(/itens: \[([^\]]+)\]/g)].flatMap((achado) => [...achado[1].matchAll(/'([a-z]+)'/g)].map((item) => item[1]));

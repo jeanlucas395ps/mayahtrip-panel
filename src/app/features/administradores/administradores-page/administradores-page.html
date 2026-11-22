@@ -1,0 +1,25 @@
+<div class="pagina__topo">
+  <div>
+    <h1 class="pagina__titulo">{{ i18n.t('admin.titulo') }}</h1>
+    <p class="pagina__subtitulo">{{ i18n.t('admin.subtitulo') }}</p>
+  </div>
+  <mt-button (click)="abrirFormulario(null)">{{ i18n.t('admin.novo') }}</mt-button>
+</div>
+
+<mt-card [semPadding]="true">
+  <mt-data-table [colunas]="colunas" [linhas]="administradores()" [carregando]="carregando()" [tituloVazio]="i18n.t('admin.vazioTitulo')">
+    <ng-template #acoesLinha let-administrador>
+      <div class="linha-acoes">
+        <mt-avatar [nome]="administrador.name" [tamanho]="28" />
+        <mt-badge [tom]="administrador.isActive ? 'sucesso' : 'neutro'">
+          {{ administrador.isActive ? i18n.t('comum.ativo') : i18n.t('comum.inativo') }}
+        </mt-badge>
+        <mt-button variante="fantasma" (click)="abrirFormulario(administrador)">{{ i18n.t('comum.editar') }}</mt-button>
+        <mt-button variante="contorno" (click)="alternarAtivo(administrador)">
+          {{ administrador.isActive ? i18n.t('admin.desativar') : i18n.t('admin.ativar') }}
+        </mt-button>
+        <mt-button variante="perigo" (click)="excluir(administrador)">{{ i18n.t('comum.excluir') }}</mt-button>
+      </div>
+    </ng-template>
+  </mt-data-table>
+</mt-card>

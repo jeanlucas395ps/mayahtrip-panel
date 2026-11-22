@@ -1,0 +1,36 @@
+<app-breadcrumb />
+
+<div class="topbar__acoes">
+  <div class="idioma">
+    @for (locale of locales; track locale) {
+      <button
+        type="button"
+        class="idioma__opcao"
+        [class.idioma__opcao--ativa]="i18n.locale() === locale"
+        [title]="rotuloLocale[locale]"
+        (click)="mudarIdioma(locale)"
+      >
+        {{ locale }}
+      </button>
+    }
+  </div>
+
+  <button type="button" class="conta" [cdkMenuTriggerFor]="menuConta">
+    <mt-avatar [nome]="email() ?? 'Admin'" [tamanho]="34" />
+  </button>
+
+  <ng-template #menuConta>
+    <div class="menu-conta" cdkMenu>
+      <div class="menu-conta__cabecalho">
+        <p class="menu-conta__rotulo">{{ i18n.t('shell.minhaConta') }}</p>
+        @if (email()) {
+          <p class="menu-conta__email">{{ email() }}</p>
+        }
+      </div>
+      <button type="button" class="menu-conta__item" cdkMenuItem (click)="sair()">
+        <mt-icon nome="sair" />
+        {{ i18n.t('shell.sair') }}
+      </button>
+    </div>
+  </ng-template>
+</div>

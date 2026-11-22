@@ -1,0 +1,42 @@
+@if (carregando()) {
+  <div class="tabela__carregando"><mt-spinner /></div>
+} @else if (linhas().length === 0) {
+  <mt-empty-state [titulo]="tituloVazio()" />
+} @else {
+  <div class="tabela-wrap">
+    <table class="tabela">
+      <thead>
+        <tr>
+          @if (capaTemplate) {
+            <th class="tabela__th-capa"></th>
+          }
+          @for (coluna of colunas(); track coluna.chave) {
+            <th [style.text-align]="coluna.alinhamento ?? 'start'" [style.width]="coluna.largura ?? null">{{ coluna.titulo }}</th>
+          }
+          @if (acoesTemplate) {
+            <th class="tabela__th-acoes"></th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (linha of linhas(); track $index) {
+          <tr (click)="linhaClicada.emit(linha)">
+            @if (capaTemplate) {
+              <td class="tabela__td-capa">
+                <ng-container *ngTemplateOutlet="capaTemplate; context: { $implicit: linha }" />
+              </td>
+            }
+            @for (coluna of colunas(); track coluna.chave) {
+              <td [style.text-align]="coluna.alinhamento ?? 'start'">{{ valorDe(linha, coluna) }}</td>
+            }
+            @if (acoesTemplate) {
+              <td class="tabela__td-acoes" (click)="$event.stopPropagation()">
+                <ng-container *ngTemplateOutlet="acoesTemplate; context: { $implicit: linha }" />
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

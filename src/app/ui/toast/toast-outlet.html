@@ -1,0 +1,10 @@
+<div class="pilha" role="status" aria-live="polite">
+  @for (item of servico.itens(); track item.id) {
+    <div class="toast" [class.toast--sucesso]="item.tom === 'sucesso'" [class.toast--erro]="item.tom === 'erro'">
+      <span class="toast__mensagem">{{ item.mensagem }}</span>
+      @if (item.acaoRotulo) {
+        <button type="button" class="toast__acao" (click)="agir(item.id, item.aoAgir)">{{ item.acaoRotulo }}</button>
+      }
+    </div>
+  }
+</div>

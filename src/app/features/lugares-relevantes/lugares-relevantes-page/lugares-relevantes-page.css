@@ -1,0 +1,68 @@
+:host {
+  display: block;
+}
+
+.pagina__topo {
+  margin-bottom: var(--esp-20);
+}
+
+.pagina__titulo {
+  margin: 0;
+  font-size: var(--tipo-h1-tam);
+  font-weight: var(--tipo-h1-peso);
+  letter-spacing: var(--tipo-h1-tracking);
+  color: var(--cor-texto-primario);
+}
+
+.pagina__subtitulo {
+  margin: var(--esp-4) 0 0;
+  color: var(--cor-texto-secundario);
+  font-size: var(--tipo-sm-tam);
+}
+
+.busca {
+  margin-bottom: var(--esp-16);
+}
+
+.busca__caixa {
+  position: relative;
+}
+
+.busca__caixa input {
+  width: 100%;
+  height: 44px;
+  padding: 0 var(--esp-14);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-campo);
+  font-family: var(--fonte-corpo);
+  font-size: var(--tipo-sm-tam);
+}
+
+.lista-candidatos {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  margin: 0;
+  padding: var(--esp-6);
+  list-style: none;
+  background: var(--cor-superficie);
+  border-radius: 12px;
+  box-shadow: var(--sombra-flutuante);
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.lista-candidatos li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--esp-8) var(--esp-10);
+  font-size: var(--tipo-sm-tam);
+  border-radius: 8px;
+}
+
+.lista-candidatos li:hover {
+  background: var(--cor-superficie-hover);
+}

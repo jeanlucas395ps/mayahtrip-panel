@@ -1,0 +1,112 @@
+<div class="pagina__topo">
+  <h1 class="pagina__titulo">{{ i18n.t('viagens.titulo') }}</h1>
+  <p class="pagina__subtitulo">{{ i18n.t('viagens.subtitulo') }}</p>
+</div>
+
+<mt-card class="filtros">
+  <form class="filtros__grade" (ngSubmit)="carregar()">
+    <label class="campo-filtro campo-filtro--largo">
+      <span>{{ i18n.t('comum.buscar') }}</span>
+      <input type="text" [(ngModel)]="filtro.q" name="q" [placeholder]="i18n.t('viagens.buscarPlaceholder')" />
+    </label>
+    <label class="campo-filtro">
+      <span>{{ i18n.t('viagens.filtroDono') }}</span>
+      <input type="text" [(ngModel)]="filtro.owner" name="owner" />
+    </label>
+    <label class="campo-filtro">
+      <span>{{ i18n.t('viagens.filtroDestino') }}</span>
+      <input type="text" [(ngModel)]="filtro.destination" name="destination" />
+    </label>
+    <label class="campo-filtro">
+      <span>{{ i18n.t('viagens.filtroStatus') }}</span>
+      <select [(ngModel)]="filtro.status" name="status">
+        <option value="">{{ i18n.t('usuarios.todos') }}</option>
+        <option value="draft">{{ i18n.t('viagens.statusDraft') }}</option>
+        <option value="upcoming">{{ i18n.t('viagens.statusUpcoming') }}</option>
+        <option value="happening">{{ i18n.t('viagens.statusHappening') }}</option>
+        <option value="finished">{{ i18n.t('viagens.statusFinished') }}</option>
+      </select>
+    </label>
+    <label class="campo-filtro">
+      <span>{{ i18n.t('viagens.filtroModo') }}</span>
+      <select [(ngModel)]="filtro.startMode" name="startMode">
+        <option value="">{{ i18n.t('usuarios.todos') }}</option>
+        <option value="suggested">{{ i18n.t('viagens.modoSuggested') }}</option>
+        <option value="community">{{ i18n.t('viagens.modoCommunity') }}</option>
+        <option value="from_scratch">{{ i18n.t('viagens.modoFrom_scratch') }}</option>
+      </select>
+    </label>
+    <label class="campo-filtro">
+      <span>{{ i18n.t('viagens.filtroDe') }}</span>
+      <input type="date" [(ngModel)]="filtro.from" name="from" />
+    </label>
+    <label class="campo-filtro">
+      <span>{{ i18n.t('viagens.filtroAte') }}</span>
+      <input type="date" [(ngModel)]="filtro.to" name="to" />
+    </label>
+    <label class="campo-filtro campo-filtro--check">
+      <input type="checkbox" [(ngModel)]="soAtivas" name="soAtivas" />
+      {{ i18n.t('viagens.soAtivas') }}
+    </label>
+    <label class="campo-filtro campo-filtro--check">
+      <input type="checkbox" [(ngModel)]="soPublicas" name="soPublicas" />
+      {{ i18n.t('viagens.soPublicas') }}
+    </label>
+    <mt-button tipo="submit">{{ i18n.t('comum.filtrar') }}</mt-button>
+  </form>
+</mt-card>
+
+<mt-card [semPadding]="true">
+  <mt-data-table [colunas]="colunas" [linhas]="viagens()" [carregando]="carregando()" [tituloVazio]="i18n.t('viagens.vazioTitulo')" (linhaClicada)="abrirFicha($event)">
+    <ng-template #acoesLinha let-viagem>
+      <mt-badge [tom]="tomDoStatus(viagem.status)">{{ rotuloDoStatus(viagem.status) }}</mt-badge>
+    </ng-template>
+  </mt-data-table>
+</mt-card>
+
+@if (ficha(); as viagem) {
+  <div class="sobreposicao" (click)="fecharFicha()"></div>
+  <aside class="ficha">
+    <div class="ficha__topo">
+      <h2>{{ i18n.t('viagens.fichaTitulo') }}</h2>
+      <mt-icon-button [rotulo]="i18n.t('usuarios.fecharFicha')" (click)="fecharFicha()">
+        <mt-icon nome="fechar" />
+      </mt-icon-button>
+    </div>
+
+    <p class="ficha__nome">{{ viagem.title }}</p>
+    <p class="ficha__username">{{ viagem.ownerName }} · {{ viagem.ownerEmail }}</p>
+
+    <div class="selos">
+      <mt-badge [tom]="tomDoStatus(viagem.status)">{{ rotuloDoStatus(viagem.status) }}</mt-badge>
+      <mt-badge [tom]="viagem.isActive ? 'sucesso' : 'neutro'">{{ viagem.isActive ? i18n.t('comum.ativo') : i18n.t('comum.inativo') }}</mt-badge>
+      <mt-badge [tom]="viagem.visibility === 'public' ? 'info' : 'neutro'">{{ viagem.visibility === 'public' ? i18n.t('viagens.publica') : i18n.t('viagens.privada') }}</mt-badge>
+    </div>
+
+    <dl class="ficha__campos">
+      <div><dt>{{ i18n.t('viagens.colunaDestinos') }}</dt><dd>{{ viagem.destinations.join(', ') }}</dd></div>
+      <div><dt>{{ i18n.t('viagens.fichaDatas') }}</dt><dd>{{ viagem.startDate ?? '—' }} → {{ viagem.endDate ?? '—' }}</dd></div>
+      @if (viagem.durationDays) {
+        <div><dt>{{ i18n.t('viagens.fichaDuracao') }}</dt><dd>{{ viagem.durationDays }} {{ i18n.t('viagens.dias') }}</dd></div>
+      }
+      <div><dt>{{ i18n.t('viagens.filtroModo') }}</dt><dd>{{ rotuloDoModo(viagem.startMode) }}</dd></div>
+    </dl>
+
+    <p class="ficha__secao">{{ i18n.t('viagens.fichaParticipantes') }}</p>
+    <ul class="participantes">
+      @for (p of viagem.participants; track p.displayName) {
+        <li>{{ p.displayName }} <span>{{ p.role ?? p.partyKind }}</span></li>
+      }
+    </ul>
+
+    <div class="ficha__acoes">
+      <mt-button variante="contorno" [largoTotal]="true" (click)="alternarAtiva(viagem)">
+        {{ viagem.isActive ? i18n.t('viagens.desativar') : i18n.t('viagens.ativar') }}
+      </mt-button>
+      <mt-button variante="contorno" [largoTotal]="true" (click)="alternarVisibilidade(viagem)">
+        {{ viagem.visibility === 'public' ? i18n.t('viagens.tornarPrivada') : i18n.t('viagens.tornarPublica') }}
+      </mt-button>
+      <mt-button variante="perigo" [largoTotal]="true" (click)="excluir(viagem)">{{ i18n.t('viagens.excluir') }}</mt-button>
+    </div>
+  </aside>
+}

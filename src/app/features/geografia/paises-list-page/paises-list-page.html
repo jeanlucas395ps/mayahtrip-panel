@@ -1,0 +1,38 @@
+<div class="pagina__topo">
+  <div>
+    <h1 class="pagina__titulo">{{ i18n.t('geo.paisesTitulo') }}</h1>
+    <p class="pagina__subtitulo">{{ i18n.t('geo.paisesSubtitulo') }}</p>
+  </div>
+  <mt-button (click)="novo()">{{ i18n.t('geo.novoPais') }}</mt-button>
+</div>
+
+<nav class="abas">
+  <a routerLink="/geografia/paises" routerLinkActive="abas__item--ativa" class="abas__item">{{ i18n.t('geo.paisesTitulo') }}</a>
+  <a routerLink="/geografia/cidades" routerLinkActive="abas__item--ativa" class="abas__item">{{ i18n.t('geo.cidadesTitulo') }}</a>
+</nav>
+
+<mt-card class="filtros">
+  <form class="filtros__linha" (ngSubmit)="carregar(1)">
+    <input type="text" [(ngModel)]="busca" name="busca" [placeholder]="i18n.t('geo.buscarPais')" />
+    <mt-button tipo="submit" variante="contorno">{{ i18n.t('comum.buscar') }}</mt-button>
+  </form>
+</mt-card>
+
+<mt-card [semPadding]="true">
+  <mt-data-table [colunas]="colunas" [linhas]="paises()" [carregando]="carregando()" [tituloVazio]="i18n.t('geo.vazioPaisesTitulo')" (linhaClicada)="abrir($event)">
+    <ng-template #capaLinha let-pais>
+      @if (urlCapa(pais); as url) {
+        <img class="capa" [src]="url" [alt]="pais.name" />
+      } @else {
+        <div class="capa capa--vazia">{{ i18n.t('geo.semCapa') }}</div>
+      }
+    </ng-template>
+    <ng-template #acoesLinha let-pais>
+      @if (pais.isPopular) {
+        <mt-badge tom="info">{{ i18n.t('geo.colunaPopular') }} · #{{ pais.popularSort }}</mt-badge>
+      }
+    </ng-template>
+  </mt-data-table>
+</mt-card>
+
+<mt-pagination [pagina]="pagina()" [totalPaginas]="totalPaginas()" (anterior)="carregar(pagina() - 1)" (proxima)="carregar(pagina() + 1)" />

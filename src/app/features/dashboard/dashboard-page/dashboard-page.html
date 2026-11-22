@@ -1,0 +1,101 @@
+<div class="pagina__topo">
+  <div>
+    <h1 class="pagina__titulo">{{ i18n.t('dashboard.titulo') }}</h1>
+    <p class="pagina__subtitulo">{{ i18n.t('dashboard.subtitulo') }}</p>
+  </div>
+
+  <form class="filtros" (ngSubmit)="carregar()">
+    <label class="filtros__campo">
+      <span>{{ i18n.t('dashboard.de') }}</span>
+      <input type="date" [(ngModel)]="de" name="de" />
+    </label>
+    <label class="filtros__campo">
+      <span>{{ i18n.t('dashboard.ate') }}</span>
+      <input type="date" [(ngModel)]="ate" name="ate" />
+    </label>
+    <label class="filtros__campo">
+      <span>{{ i18n.t('dashboard.ano') }}</span>
+      <input type="number" [(ngModel)]="ano" name="ano" />
+    </label>
+    <button type="submit" class="filtros__botao">{{ i18n.t('comum.filtrar') }}</button>
+  </form>
+</div>
+
+@if (carregando() && !resumo()) {
+  <div class="pagina__carregando"><mt-spinner [tamanho]="32" /></div>
+} @else if (erro() && !resumo()) {
+  <mt-card>{{ i18n.t(erro()!) }}</mt-card>
+} @else if (resumo(); as dados) {
+  <div class="grade-totais">
+    <mt-stat-card [rotulo]="i18n.t('dashboard.totalViagens')" [valor]="dados.totals.trips" tom="roxo">
+      <mt-icon icone nome="mala" />
+    </mt-stat-card>
+    <mt-stat-card [rotulo]="i18n.t('dashboard.totalUsuarios')" [valor]="dados.totals.users">
+      <mt-icon icone nome="usuario" />
+    </mt-stat-card>
+    <mt-stat-card [rotulo]="i18n.t('dashboard.totalAdministradores')" [valor]="dados.totals.admins">
+      <mt-icon icone nome="escudo" />
+    </mt-stat-card>
+    <mt-stat-card [rotulo]="i18n.t('dashboard.totalRoteiros')" [valor]="dados.totals.itineraries">
+      <mt-icon icone nome="pino" />
+    </mt-stat-card>
+    <mt-stat-card [rotulo]="i18n.t('dashboard.totalAgentes')" [valor]="dados.totals.agents" tom="lima">
+      <mt-icon icone nome="conversa" />
+    </mt-stat-card>
+    <mt-stat-card [rotulo]="i18n.t('dashboard.graficoProAtivos') + ' · ' + ano()" [valor]="dados.activePro">
+      <mt-icon icone nome="estrela" />
+    </mt-stat-card>
+  </div>
+
+  <div class="grade-graficos">
+    <mt-card class="cartao-grafico">
+      <h2 class="cartao-grafico__titulo">{{ i18n.t('dashboard.graficoNovos') }}</h2>
+      @if (serieNovos().length) {
+        <ngx-charts-line-chart
+          class="grafico"
+          [results]="serieNovos()"
+          [scheme]="esquemaNovos"
+          [xAxis]="true"
+          [yAxis]="true"
+          [timeline]="false"
+          [roundDomains]="true"
+          [autoScale]="true"
+        />
+      } @else {
+        <p class="cartao-grafico__vazio">{{ i18n.t('dashboard.semDados') }}</p>
+      }
+    </mt-card>
+
+    <mt-card class="cartao-grafico">
+      <h2 class="cartao-grafico__titulo">{{ i18n.t('dashboard.graficoAquisicoes') }}</h2>
+      @if (dados.acquisitions.free + dados.acquisitions.pro > 0) {
+        <ngx-charts-advanced-pie-chart class="grafico" [results]="serieAquisicoes()" [scheme]="esquemaAquisicoes" />
+      } @else {
+        <p class="cartao-grafico__vazio">{{ i18n.t('dashboard.semDados') }}</p>
+      }
+    </mt-card>
+  </div>
+
+  <mt-card class="cartao-filas">
+    <h2 class="cartao-grafico__titulo">{{ i18n.t('dashboard.filaTitulo') }}</h2>
+    <div class="grade-filas">
+      @for (chave of filasVisiveis; track chave) {
+        <div class="fila">
+          <div class="fila__topo">
+            <strong>{{ rotuloDaFila(chave) }}</strong>
+            <mt-badge [tom]="tomDoWorker(chave)">
+              {{ statusDoWorker(chave) || '—' }}
+            </mt-badge>
+          </div>
+          @if (contagemDaFila(chave); as contagem) {
+            <dl class="fila__contagens">
+              <div><dt>{{ i18n.t('dashboard.filaPendente') }}</dt><dd>{{ contagem.pending }}</dd></div>
+              <div><dt>{{ i18n.t('dashboard.filaProcessando') }}</dt><dd>{{ contagem.processing }}</dd></div>
+              <div><dt>{{ i18n.t('dashboard.filaFalhos') }}</dt><dd [class.fila__falhos]="contagem.failed > 0">{{ contagem.failed }}</dd></div>
+            </dl>
+          }
+        </div>
+      }
+    </div>
+  </mt-card>
+}

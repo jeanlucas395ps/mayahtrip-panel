@@ -1,0 +1,70 @@
+:host {
+  display: block;
+}
+
+.tabela__carregando {
+  display: flex;
+  justify-content: center;
+  padding: var(--esp-40);
+}
+
+.tabela-wrap {
+  overflow-x: auto;
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabela th {
+  text-align: left;
+  padding: var(--esp-12) var(--esp-16);
+  background: var(--cor-fundo-pagina);
+  color: var(--cor-texto-secundario);
+  font-size: var(--tipo-xs-tam);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--cor-borda-suave);
+  white-space: nowrap;
+}
+
+.tabela td {
+  padding: var(--esp-14) var(--esp-16);
+  border-bottom: 1px solid var(--cor-borda-suave);
+  font-size: var(--tipo-sm-tam);
+  color: var(--cor-texto-primario);
+  vertical-align: middle;
+}
+
+.tabela tbody tr {
+  transition: background-color var(--duracao-rapida) var(--easing-padrao);
+  cursor: pointer;
+}
+
+.tabela tbody tr:hover {
+  background: var(--cor-fundo-pagina);
+}
+
+.tabela tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.tabela__th-acoes,
+.tabela__td-acoes {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.tabela__th-capa,
+.tabela__td-capa {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.tabela__td-capa {
+  padding-right: 0;
+}
+

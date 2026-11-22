@@ -1,0 +1,50 @@
+:host {
+  display: block;
+}
+
+.pagina__topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--esp-16);
+  margin-bottom: var(--esp-20);
+}
+
+.pagina__titulo {
+  margin: 0;
+  font-size: var(--tipo-h1-tam);
+  font-weight: var(--tipo-h1-peso);
+  letter-spacing: var(--tipo-h1-tracking);
+  color: var(--cor-texto-primario);
+}
+
+.pagina__subtitulo {
+  margin: var(--esp-4) 0 0;
+  color: var(--cor-texto-secundario);
+  font-size: var(--tipo-sm-tam);
+}
+
+.filtros {
+  margin-bottom: var(--esp-16);
+}
+
+.filtros__linha {
+  display: flex;
+  gap: var(--esp-10);
+}
+
+.filtros__linha input,
+.filtros__linha select {
+  height: 40px;
+  padding: 0 var(--esp-14);
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  background: var(--cor-superficie);
+  font-family: var(--fonte-corpo);
+  font-size: var(--tipo-sm-tam);
+}
+
+.filtros__linha input {
+  flex: 1;
+}

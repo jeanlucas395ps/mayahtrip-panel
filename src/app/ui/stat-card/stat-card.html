@@ -1,0 +1,12 @@
+<div class="stat__topo">
+  <span class="stat__icone" [class.stat__icone--roxo]="tom() === 'roxo'" [class.stat__icone--lima]="tom() === 'lima'">
+    <ng-content select="[icone]" />
+  </span>
+  @if (tendencia() !== null) {
+    <span class="stat__tendencia" [class.stat__tendencia--negativa]="tendencia()! < 0">
+      {{ tendencia()! > 0 ? '+' : '' }}{{ tendencia() }}%
+    </span>
+  }
+</div>
+<span class="stat__rotulo">{{ rotulo() }}</span>
+<strong class="stat__valor">{{ valor() }}</strong>

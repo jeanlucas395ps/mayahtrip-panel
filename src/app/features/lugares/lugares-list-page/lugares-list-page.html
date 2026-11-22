@@ -1,0 +1,29 @@
+<div class="pagina__topo">
+  <div>
+    <h1 class="pagina__titulo">{{ i18n.t('lugares.titulo') }}</h1>
+    <p class="pagina__subtitulo">{{ i18n.t('lugares.subtitulo') }}</p>
+  </div>
+  <mt-button (click)="novo()">{{ i18n.t('lugares.novo') }}</mt-button>
+</div>
+
+<mt-card class="filtros">
+  <form class="filtros__linha" (ngSubmit)="carregar(1)">
+    <input type="text" [(ngModel)]="busca" name="busca" [placeholder]="i18n.t('lugares.buscar')" />
+    <select [(ngModel)]="status" name="status">
+      <option value="">{{ i18n.t('comum.filtrar') }} — {{ i18n.t('lugares.filtroStatus') }}</option>
+      <option value="active">{{ i18n.t('lugares.statusActive') }}</option>
+      <option value="archived">{{ i18n.t('lugares.statusArchived') }}</option>
+    </select>
+    <mt-button tipo="submit" variante="contorno">{{ i18n.t('comum.buscar') }}</mt-button>
+  </form>
+</mt-card>
+
+<mt-card [semPadding]="true">
+  <mt-data-table [colunas]="colunas" [linhas]="lugares()" [carregando]="carregando()" [tituloVazio]="i18n.t('lugares.vazioTitulo')" (linhaClicada)="abrir($event)">
+    <ng-template #acoesLinha let-lugar>
+      <mt-badge [tom]="tomDoStatus(lugar.status)">{{ rotuloDoStatus(lugar.status) }}</mt-badge>
+    </ng-template>
+  </mt-data-table>
+</mt-card>
+
+<mt-pagination [pagina]="pagina()" [totalPaginas]="totalPaginas()" (anterior)="carregar(pagina() - 1)" (proxima)="carregar(pagina() + 1)" />

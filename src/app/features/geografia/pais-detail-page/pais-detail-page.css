@@ -1,0 +1,105 @@
+:host {
+  display: block;
+}
+
+.pagina__topo {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-12);
+  margin-bottom: var(--esp-20);
+}
+
+.pagina__titulo {
+  margin: 0;
+  font-family: var(--fonte-display);
+  font-size: 36px;
+  color: var(--cor-texto-primario);
+}
+
+.grade {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: var(--esp-16);
+  margin-bottom: var(--esp-16);
+  align-items: start;
+}
+
+.rotulo {
+  display: block;
+  font-size: var(--tipo-xs-tam);
+  font-weight: 700;
+  color: var(--cor-texto-secundario);
+  margin-bottom: var(--esp-10);
+}
+
+.capa {
+  display: block;
+  width: 100%;
+  height: 140px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: var(--cor-fundo-pagina);
+}
+
+.capa--vazia {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--tipo-sm-tam);
+  color: var(--cor-texto-terciario);
+}
+
+.botao-upload {
+  display: block;
+  margin-top: var(--esp-12);
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-pilula);
+  font-size: var(--tipo-sm-tam);
+  font-weight: 700;
+  color: var(--cor-acao);
+  cursor: pointer;
+}
+
+.dica {
+  margin: var(--esp-8) 0 0;
+  font-size: var(--tipo-xs-tam);
+  color: var(--cor-texto-terciario);
+  text-align: center;
+}
+
+.cartao-formulario form {
+  display: grid;
+  gap: var(--esp-16);
+}
+
+.linha {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--esp-16);
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-8);
+  font-size: var(--tipo-sm-tam);
+  font-weight: 600;
+  color: var(--cor-texto-primario);
+}
+
+.cidades__titulo {
+  margin: 0;
+  padding: var(--esp-16) var(--esp-20) 0;
+  font-size: var(--tipo-h2-tam);
+  font-weight: var(--tipo-h2-peso);
+  color: var(--cor-texto-primario);
+}
+
+@media (max-width: 720px) {
+  .grade {
+    grid-template-columns: 1fr;
+  }
+}

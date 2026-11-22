@@ -1,0 +1,22 @@
+<div class="dialogo">
+  <h2 class="dialogo__titulo">{{ editando ? i18n.t('admin.formTituloEditar') : i18n.t('admin.formTituloNovo') }}</h2>
+
+  <form class="dialogo__formulario" [formGroup]="formulario" (ngSubmit)="confirmar()" novalidate>
+    <mt-form-field [rotulo]="i18n.t('admin.campoNome')" [obrigatorio]="true">
+      <input type="text" formControlName="nome" autocomplete="name" />
+    </mt-form-field>
+
+    <mt-form-field [rotulo]="i18n.t('admin.campoEmail')" [obrigatorio]="true">
+      <input type="email" formControlName="email" autocomplete="email" />
+    </mt-form-field>
+
+    <mt-form-field [rotulo]="i18n.t('admin.campoSenha')" [obrigatorio]="!editando" [dica]="editando ? i18n.t('admin.campoSenhaOpcional') : null">
+      <input type="password" formControlName="senha" autocomplete="new-password" />
+    </mt-form-field>
+
+    <div class="dialogo__acoes">
+      <mt-button variante="contorno" tipo="button" (click)="cancelar()">{{ i18n.t('comum.cancelar') }}</mt-button>
+      <mt-button tipo="submit">{{ i18n.t('comum.salvar') }}</mt-button>
+    </div>
+  </form>
+</div>

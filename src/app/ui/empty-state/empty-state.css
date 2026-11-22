@@ -1,0 +1,46 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--esp-40) var(--esp-20);
+  color: var(--cor-texto-secundario);
+}
+
+.vazio__icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--cor-fundo-pagina);
+  color: var(--cor-texto-terciario);
+  margin-bottom: var(--esp-16);
+}
+
+::ng-deep .vazio__icone svg {
+  width: 26px;
+  height: 26px;
+}
+
+.vazio__titulo {
+  margin: 0;
+  font-size: var(--tipo-h3-tam);
+  font-weight: 700;
+  color: var(--cor-texto-primario);
+}
+
+.vazio__descricao {
+  margin: var(--esp-6) 0 0;
+  font-size: var(--tipo-sm-tam);
+  max-width: 320px;
+}
+
+.vazio__acao {
+  margin-top: var(--esp-16);
+}
+
+.vazio__acao:empty {
+  display: none;
+}

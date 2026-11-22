@@ -14,13 +14,27 @@
             "index": "src/index.html",
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
-            "styles": ["src/styles.css"],
+            "styles": ["src/app/core/styles/tokens.css", "src/styles.css"],
+            "assets": [{ "glob": "**/*", "input": "public" }],
             "optimization": { "fonts": { "inline": false } }
+          },
+          "configurations": {
+            "development": {
+              "optimization": false,
+              "sourceMap": true
+            }
           }
         },
         "serve": {
           "builder": "@angular/build:dev-server",
           "options": { "buildTarget": "painel:build" }
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "tsconfig.spec.json",
+            "buildTarget": "::development"
+          }
         }
       }
     }

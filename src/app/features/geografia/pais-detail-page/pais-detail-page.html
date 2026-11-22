@@ -1,0 +1,65 @@
+@if (naoEncontrado()) {
+  <mt-card>
+    <mt-empty-state [titulo]="i18n.t('geo.naoEncontrado')">
+      <a acao [routerLink]="['/geografia/paises']">
+        <mt-button variante="contorno">{{ i18n.t('geo.voltarParaLista') }}</mt-button>
+      </a>
+    </mt-empty-state>
+  </mt-card>
+} @else {
+  <div class="pagina__topo">
+    <h1 class="pagina__titulo">{{ ehNovo ? i18n.t('geo.novoPais') : (pais()?.name ?? '') }}</h1>
+    @if (pais()?.isPopular) {
+      <mt-badge tom="info">{{ i18n.t('geo.colunaPopular') }} · #{{ pais()?.popularSort }}</mt-badge>
+    }
+  </div>
+
+  <div class="grade">
+    <mt-card class="cartao-capa">
+      <span class="rotulo">{{ i18n.t('geo.capa') }}</span>
+      @if (urlCapa(); as url) {
+        <img class="capa" [src]="url" [alt]="pais()?.name" />
+      } @else {
+        <div class="capa capa--vazia">{{ i18n.t('geo.semCapa') }}</div>
+      }
+      @if (!ehNovo) {
+        <label class="botao-upload">
+          {{ enviandoCapa() ? i18n.t('comum.carregando') : (pais()?.coverStorageKey ? i18n.t('geo.trocarCapa') : i18n.t('geo.enviarCapa')) }}
+          <input type="file" accept="image/jpeg,image/png,image/webp" (change)="enviarCapa($event)" [disabled]="enviandoCapa()" hidden />
+        </label>
+        <p class="dica">{{ i18n.t('geo.capaFormato') }}</p>
+      }
+    </mt-card>
+
+    <mt-card class="cartao-formulario">
+      <form [formGroup]="formulario" (ngSubmit)="salvar()" novalidate>
+        <mt-form-field [rotulo]="i18n.t('geo.campoNome')" [obrigatorio]="true">
+          <input type="text" formControlName="name" />
+        </mt-form-field>
+        <div class="linha">
+          <mt-form-field [rotulo]="i18n.t('geo.campoIso2')">
+            <input type="text" formControlName="iso2" maxlength="2" />
+          </mt-form-field>
+          <mt-form-field [rotulo]="i18n.t('geo.campoIso3')">
+            <input type="text" formControlName="iso3" maxlength="3" />
+          </mt-form-field>
+        </div>
+        <label class="check">
+          <input type="checkbox" formControlName="isPopular" />
+          {{ i18n.t('geo.campoPopular') }}
+        </label>
+        <mt-form-field [rotulo]="i18n.t('geo.campoOrdemPopular')">
+          <input type="number" formControlName="popularSort" />
+        </mt-form-field>
+        <mt-button tipo="submit">{{ i18n.t('comum.salvar') }}</mt-button>
+      </form>
+    </mt-card>
+  </div>
+
+  @if (!ehNovo) {
+    <mt-card [semPadding]="true" class="cidades">
+      <h2 class="cidades__titulo">{{ i18n.t('geo.cidadesDoPais') }}</h2>
+      <mt-data-table [colunas]="colunasCidades" [linhas]="cidades()" [tituloVazio]="i18n.t('geo.vazioCidadesTitulo')" (linhaClicada)="abrirCidade($event)" />
+    </mt-card>
+  }
+}

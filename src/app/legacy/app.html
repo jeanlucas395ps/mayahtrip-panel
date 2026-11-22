@@ -306,6 +306,227 @@
             </tbody>
           </table>
         </div>
+      } @else if (tela() === 'geografia') {
+        <header class="topo">
+          <div><p class="kicker">{{ t('gViagens') }}</p><h1>{{ t('geografia') }}</h1></div>
+          <div class="acoes">
+            <button class="ghost" type="button" (click)="novoPais()">{{ t('novoPais') }}</button>
+            <button class="lime" type="button" (click)="novaCidade()">{{ t('novaCidade') }}</button>
+          </div>
+        </header>
+        @if (paisForm) {
+          <form class="folha pad" (ngSubmit)="salvarPaisForm()">
+            <h2>{{ paisForm.id ? t('editar') : t('novoPais') }}</h2>
+            <label>{{ t('nome') }} <input name="paisNome" [(ngModel)]="paisForm.name" required /></label>
+            <label>{{ t('iso2') }} <input name="paisIso2" [(ngModel)]="paisForm.iso2" maxlength="2" /></label>
+            <label>{{ t('iso3') }} <input name="paisIso3" [(ngModel)]="paisForm.iso3" maxlength="3" /></label>
+            <label class="check"><input type="checkbox" name="paisPopular" [(ngModel)]="paisForm.isPopular" /> {{ t('popular') }}</label>
+            <label>{{ t('ordemPopular') }} <input name="paisSort" type="number" [(ngModel)]="paisForm.popularSort" /></label>
+            @if (paisForm.id) {
+              <label>{{ t('capa') }}
+                <input type="file" accept="image/jpeg,image/png,image/webp" (change)="enviarCapaPais($event)" />
+              </label>
+              @if (paisForm.coverStorageKey) {
+                <img class="capa-geo" [src]="urlCapaGeo('countries', paisForm.id)" [alt]="paisForm.name" />
+              }
+            }
+            <div class="acoes">
+              <button class="pri" type="submit">{{ t('salvar') }}</button>
+              <button class="ghost" type="button" (click)="paisForm = null">{{ t('voltar') }}</button>
+            </div>
+          </form>
+        }
+        @if (cidadeForm) {
+          <form class="folha pad" (ngSubmit)="salvarCidadeForm()">
+            <h2>{{ cidadeForm.id ? t('editar') : t('novaCidade') }}</h2>
+            <label>{{ t('nome') }} <input name="cidadeNome" [(ngModel)]="cidadeForm.name" required /></label>
+            <label>{{ t('pais') }}
+              <select name="cidadePais" [(ngModel)]="cidadeForm.countryId" required>
+                @for (p of paisesAdmin(); track p.id) {
+                  <option [value]="p.id">{{ p.name }}</option>
+                }
+              </select>
+            </label>
+            <label>{{ t('latitude') }} <input name="cidadeLat" type="number" step="any" [(ngModel)]="cidadeForm.latitude" /></label>
+            <label>{{ t('longitude') }} <input name="cidadeLng" type="number" step="any" [(ngModel)]="cidadeForm.longitude" /></label>
+            <label class="check"><input type="checkbox" name="cidadePopular" [(ngModel)]="cidadeForm.isPopular" /> {{ t('popular') }}</label>
+            <label>{{ t('ordemPopular') }} <input name="cidadeSort" type="number" [(ngModel)]="cidadeForm.popularSort" /></label>
+            @if (cidadeForm.id) {
+              <label>{{ t('capa') }}
+                <input type="file" accept="image/jpeg,image/png,image/webp" (change)="enviarCapaCidade($event)" />
+              </label>
+              @if (cidadeForm.coverStorageKey) {
+                <img class="capa-geo" [src]="urlCapaGeo('cities', cidadeForm.id)" [alt]="cidadeForm.name" />
+              }
+            }
+            <div class="acoes">
+              <button class="pri" type="submit">{{ t('salvar') }}</button>
+              <button class="ghost" type="button" (click)="cidadeForm = null">{{ t('voltar') }}</button>
+            </div>
+          </form>
+        }
+        @if (paisesEmAlta().length || cidadesEmAlta().length) {
+          <section class="folha pad em-alta">
+            <h2>{{ t('emAltaAgora') }}</h2>
+            <p class="mut">{{ t('emAltaHint') }}</p>
+            @if (paisesEmAlta().length) {
+              <p class="kicker" style="margin-top:12px">{{ t('paisesEmAlta') }}</p>
+              <div class="grade-alta">
+                @for (pais of paisesEmAlta(); track pais.id) {
+                  <button type="button" class="card-alta" (click)="editarPais(pais)">
+                    @if (pais.coverStorageKey) {
+                      <img [src]="urlCapaGeo('countries', pais.id)" [alt]="pais.name" />
+                    } @else {
+                      <span class="card-alta-fallback">{{ pais.iso2 || pais.name.slice(0, 2) }}</span>
+                    }
+                    <span class="card-alta-meta">
+                      <strong>{{ pais.name }}</strong>
+                      <small>#{{ pais.popularSort || '—' }}</small>
+                    </span>
+                  </button>
+                }
+              </div>
+            }
+            @if (cidadesEmAlta().length) {
+              <p class="kicker" style="margin-top:16px">{{ t('cidadesEmAlta') }}</p>
+              <div class="grade-alta">
+                @for (cidade of cidadesEmAlta(); track cidade.id) {
+                  <button type="button" class="card-alta" (click)="editarCidade(cidade)">
+                    @if (cidade.coverStorageKey) {
+                      <img [src]="urlCapaGeo('cities', cidade.id)" [alt]="cidade.name" />
+                    } @else {
+                      <span class="card-alta-fallback">{{ cidade.name.slice(0, 2) }}</span>
+                    }
+                    <span class="card-alta-meta">
+                      <strong>{{ cidade.name }}</strong>
+                      <small>{{ cidade.countryName || '—' }} · #{{ cidade.popularSort || '—' }}</small>
+                    </span>
+                  </button>
+                }
+              </div>
+            }
+          </section>
+        }
+
+        <div class="duas">
+          <section>
+            <form class="folha filtros" (ngSubmit)="buscarPaisesAdmin()">
+              <label>{{ t('pais') }} <input name="buscaPais" [(ngModel)]="buscaPais" /></label>
+              <label class="check"><input type="checkbox" name="soPopPais" [(ngModel)]="soPopularesPais" /> {{ t('soEmAlta') }}</label>
+              <button class="pri" type="submit">{{ t('buscar') }}</button>
+            </form>
+            <div class="folha">
+              <table>
+                <thead><tr><th>{{ t('nome') }}</th><th>{{ t('iso2') }}</th><th>{{ t('popular') }}</th><th>{{ t('cidadesCount') }}</th><th></th></tr></thead>
+                <tbody>
+                  @for (pais of paisesNaTabela(); track pais.id) {
+                    <tr>
+                      <td>
+                        @if (pais.coverStorageKey) {
+                          <img class="capa-geo mini" [src]="urlCapaGeo('countries', pais.id)" [alt]="pais.name" />
+                        }
+                        {{ pais.name }}
+                      </td>
+                      <td>{{ pais.iso2 || '—' }}</td>
+                      <td><span class="selo" [class.on]="pais.isPopular">{{ rotuloPopular(pais) }}</span></td>
+                      <td>{{ pais.citiesCount }}</td>
+                      <td class="acoes"><button class="ghost" type="button" (click)="editarPais(pais)">{{ t('editar') }}</button></td>
+                    </tr>
+                  } @empty { <tr><td class="vazio" colspan="5">—</td></tr> }
+                </tbody>
+              </table>
+              <div class="acoes" style="justify-content:space-between;margin-top:14px">
+                <button class="ghost" type="button" [disabled]="paisPagina <= 1" (click)="carregarPaisesAdmin(paisPagina - 1)">{{ t('anterior') }}</button>
+                <span class="mut">{{ t('pagina') }} {{ paisPagina }} / {{ paisTotalPaginas }} · {{ paisTotal }}</span>
+                <button class="ghost" type="button" [disabled]="paisPagina >= paisTotalPaginas" (click)="carregarPaisesAdmin(paisPagina + 1)">{{ t('proximaPagina') }}</button>
+              </div>
+            </div>
+          </section>
+          <section>
+            <form class="folha filtros" (ngSubmit)="buscarCidadesAdmin()">
+              <label>{{ t('cidade') }} <input name="buscaCidadeAdmin" [(ngModel)]="buscaCidadeAdmin" /></label>
+              <label>{{ t('filtrarPorPais') }}
+                <select name="filtroPaisGeo" [(ngModel)]="filtroPaisGeo" (ngModelChange)="buscarCidadesAdmin()">
+                  <option value="">{{ t('todos') }}</option>
+                  @for (p of paisesAdmin(); track p.id) {
+                    <option [value]="p.id">{{ p.name }}</option>
+                  }
+                </select>
+              </label>
+              <label class="check"><input type="checkbox" name="soPopCidade" [(ngModel)]="soPopularesCidade" /> {{ t('soEmAlta') }}</label>
+              <button class="pri" type="submit">{{ t('buscar') }}</button>
+            </form>
+            <div class="folha">
+              <table>
+                <thead><tr><th>{{ t('nome') }}</th><th>{{ t('pais') }}</th><th>{{ t('popular') }}</th><th></th></tr></thead>
+                <tbody>
+                  @for (cidade of cidadesNaTabela(); track cidade.id) {
+                    <tr>
+                      <td>
+                        @if (cidade.coverStorageKey) {
+                          <img class="capa-geo mini" [src]="urlCapaGeo('cities', cidade.id)" [alt]="cidade.name" />
+                        }
+                        {{ cidade.name }}
+                      </td>
+                      <td>{{ cidade.countryName || '—' }}</td>
+                      <td><span class="selo" [class.on]="cidade.isPopular">{{ rotuloPopular(cidade) }}</span></td>
+                      <td class="acoes"><button class="ghost" type="button" (click)="editarCidade(cidade)">{{ t('editar') }}</button></td>
+                    </tr>
+                  } @empty { <tr><td class="vazio" colspan="4">—</td></tr> }
+                </tbody>
+              </table>
+              <div class="acoes" style="justify-content:space-between;margin-top:14px">
+                <button class="ghost" type="button" [disabled]="cidadeAdminPagina <= 1" (click)="carregarCidadesAdmin(cidadeAdminPagina - 1)">{{ t('anterior') }}</button>
+                <span class="mut">{{ t('pagina') }} {{ cidadeAdminPagina }} / {{ cidadeAdminTotalPaginas }} · {{ cidadeAdminTotal }}</span>
+                <button class="ghost" type="button" [disabled]="cidadeAdminPagina >= cidadeAdminTotalPaginas" (click)="carregarCidadesAdmin(cidadeAdminPagina + 1)">{{ t('proximaPagina') }}</button>
+              </div>
+            </div>
+          </section>
+        </div>
+      } @else if (tela() === 'lugaresRelevantes') {
+        <header class="topo">
+          <div>
+            <p class="kicker">{{ t('gViagens') }}</p>
+            <h1>{{ t('lugaresRelevantes') }}</h1>
+            <p class="mut">{{ t('lugaresRelevantesHint') }}</p>
+          </div>
+        </header>
+        <form class="folha filtros" (ngSubmit)="$event.preventDefault()">
+          <label>{{ t('buscarLugarParaRelevante') }}
+            <input name="buscaRelevante" [ngModel]="buscaRelevante" (ngModelChange)="aoDigitarBuscaRelevante($event)" />
+          </label>
+        </form>
+        @if (buscaRelevante.trim()) {
+          <div class="folha">
+            <table>
+              <thead><tr><th>{{ t('nome') }}</th><th>{{ t('cidade') }}</th><th></th></tr></thead>
+              <tbody>
+                @for (lugar of candidatosRelevantes(); track lugar.id) {
+                  <tr>
+                    <td>{{ lugar.name }}</td>
+                    <td>{{ lugar.cityName || '—' }}</td>
+                    <td class="acoes"><button class="pri" type="button" (click)="adicionarRelevante(lugar.id)">{{ t('adicionarRelevante') }}</button></td>
+                  </tr>
+                } @empty { <tr><td class="vazio" colspan="3">—</td></tr> }
+              </tbody>
+            </table>
+          </div>
+        }
+        <div class="folha">
+          <table>
+            <thead><tr><th>{{ t('nome') }}</th><th>{{ t('cidade') }}</th><th>{{ t('totalAvaliacoes') }}</th><th></th></tr></thead>
+            <tbody>
+              @for (item of relevantes(); track item.placeId) {
+                <tr>
+                  <td>{{ item.name }}</td>
+                  <td>{{ item.cityName || '—' }}</td>
+                  <td>{{ item.totalReviews }}</td>
+                  <td class="acoes"><button class="ghost" type="button" (click)="removerRelevante(item.placeId)">{{ t('removerRelevante') }}</button></td>
+                </tr>
+              } @empty { <tr><td class="vazio" colspan="4">—</td></tr> }
+            </tbody>
+          </table>
+        </div>
       } @else if (tela() === 'lugares') {
         <header class="topo"><div><p class="kicker">{{ t('gViagens') }}</p><h1>{{ t('lugares') }}</h1></div><button class="lime" type="button" (click)="novoLugar()">{{ t('novoLugar') }}</button></header>
         <form class="folha filtros" (ngSubmit)="buscarLugares()">

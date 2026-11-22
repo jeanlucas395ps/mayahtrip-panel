@@ -1,0 +1,193 @@
+/*
+ * Tokens de design do painel novo.
+ * Fonte: mayahtrip-base/.docs/DESIGN.md (Colors, Typography, Shapes,
+ * Elevation, Motion) e DESIGN_SYSTEM.md (contrato curto).
+ * Duas camadas: primitivas (valor de marca, não usar direto em componente)
+ * e semânticas (papel de uso — é isso que os componentes devem consumir).
+ * Qualquer cor nova entra aqui primeiro (DESIGN_SYSTEM.md §Don't).
+ */
+
+:root {
+  /* ---------- Primitivas: marca ---------- */
+  --mt-roxo: #2b207f;
+  --mt-roxo-hover: #3b2f91;
+  --mt-roxo-profundo: #1e1760;
+  --mt-lima: #c9ff27;
+  --mt-lima-hover: #b8e821;
+  --mt-lima-contorno: #9acc1f;
+  --mt-lima-suave-fundo: #eeffc2;
+  --mt-lima-suave-texto: #3a4d00;
+  --mt-lima-dica-fundo: #f1ffd1;
+  --mt-lima-dica-texto: #2c3a00;
+
+  /* ---------- Primitivas: neutros ---------- */
+  --mt-tinta: #15122e;
+  --mt-noite-splash: #120f2a;
+  --mt-ardosia: #5e5a73;
+  --mt-ardosia-clara: #8c889e;
+  --mt-icone-cinza: #9a97ab;
+  --mt-nevoa: #f4f3f8;
+  --mt-nevoa-funda: #e9e7f0;
+  --mt-linha: #e5e3ec;
+  --mt-linha-suave: #eeecf3;
+  --mt-lavanda: #ebe8ff;
+  --mt-lavanda-clara: #f8f7ff;
+  --mt-lavanda-texto: #d4cefc;
+  --mt-branco: #ffffff;
+
+  /* ---------- Primitivas: semânticas de produto ---------- */
+  --mt-erro: #d2462a;
+  --mt-deve: #962a10;
+  --mt-deve-fundo: #ffe6e0;
+  --mt-receber: #3a6b00;
+  --mt-sucesso: #3a9a2e;
+  --mt-aviso: #e2a92a;
+  --mt-notificacao: #ff5a36;
+  --mt-estrela: #f5a524;
+  --mt-estrela-vazia: #d5d3de;
+  --mt-online: #7bd389;
+
+  /* ---------- Semânticas: superfície ---------- */
+  --cor-fundo-pagina: var(--mt-nevoa);
+  --cor-superficie: var(--mt-branco);
+  --cor-superficie-hover: var(--mt-nevoa);
+  --cor-superficie-selecionada: var(--mt-lavanda-clara);
+  --cor-borda: var(--mt-linha);
+  --cor-borda-suave: var(--mt-linha-suave);
+  --cor-borda-foco: var(--mt-roxo);
+  --cor-halo-foco: var(--mt-lavanda);
+
+  /* ---------- Semânticas: texto ---------- */
+  --cor-texto-primario: var(--mt-tinta);
+  --cor-texto-secundario: var(--mt-ardosia);
+  --cor-texto-terciario: var(--mt-ardosia-clara);
+  --cor-texto-sobre-acao: #ffffff;
+  --cor-texto-sobre-lima: var(--mt-tinta);
+  --cor-texto-desabilitado: var(--mt-ardosia-clara);
+
+  /* ---------- Semânticas: ação ---------- */
+  --cor-acao: var(--mt-roxo);
+  --cor-acao-hover: var(--mt-roxo-hover);
+  --cor-acao-fundo-suave: var(--mt-lavanda);
+  --cor-acento: var(--mt-lima);
+  --cor-acento-hover: var(--mt-lima-hover);
+
+  /* ---------- Semânticas: estado ---------- */
+  --cor-sucesso-texto: var(--mt-sucesso);
+  --cor-sucesso-fundo: var(--mt-lima-suave-fundo);
+  --cor-erro-texto: var(--mt-erro);
+  --cor-erro-fundo: var(--mt-deve-fundo);
+  --cor-aviso-texto: #8a5a00;
+  --cor-aviso-fundo: #fff2d6;
+  --cor-info-texto: var(--mt-roxo);
+  --cor-info-fundo: var(--mt-lavanda);
+  --cor-neutro-texto: var(--mt-ardosia);
+  --cor-neutro-fundo: var(--mt-nevoa);
+
+  /* ---------- Tipografia ---------- */
+  --fonte-display: 'Instrument Serif', Georgia, serif;
+  --fonte-corpo: 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  --tipo-h1-tam: 30px;
+  --tipo-h1-peso: 800;
+  --tipo-h1-tracking: -0.035em;
+  --tipo-h2-tam: 19px;
+  --tipo-h2-peso: 800;
+  --tipo-h2-tracking: -0.025em;
+  --tipo-h3-tam: 16px;
+  --tipo-h3-peso: 700;
+  --tipo-corpo-tam: 15px;
+  --tipo-corpo-altura: 1.45;
+  --tipo-sm-tam: 13px;
+  --tipo-xs-tam: 12px;
+  --tipo-kicker-tam: 11px;
+  --tipo-kicker-peso: 800;
+  --tipo-kicker-tracking: 0.14em;
+  --tipo-micro-tam: 10px;
+
+  /* ---------- Espaçamento (escala observada em DESIGN.md) ---------- */
+  --esp-2: 2px;
+  --esp-4: 4px;
+  --esp-6: 6px;
+  --esp-8: 8px;
+  --esp-10: 10px;
+  --esp-12: 12px;
+  --esp-14: 14px;
+  --esp-16: 16px;
+  --esp-18: 18px;
+  --esp-20: 20px;
+  --esp-22: 22px;
+  --esp-24: 24px;
+  --esp-32: 32px;
+  --esp-40: 40px;
+
+  /* ---------- Raios ---------- */
+  --raio-pilula: 999px;
+  --raio-etiqueta: 8px;
+  --raio-campo: 16px;
+  --raio-botao-icone: 999px;
+  --raio-cartao: 20px;
+  --raio-cartao-lista: 24px;
+  --raio-folha: 30px;
+
+  /* ---------- Sombras ---------- */
+  --sombra-cartao: 0 1px 2px rgba(21, 18, 46, 0.05), 0 12px 32px rgba(21, 18, 46, 0.07);
+  --sombra-flutuante: 0 12px 28px rgba(21, 18, 46, 0.3);
+  --sombra-cta: 0 14px 30px rgba(43, 32, 127, 0.25);
+  --sombra-icone-bloco: 0 4px 10px rgba(43, 32, 127, 0.18);
+  --sombra-folha: 0 -16px 48px rgba(21, 18, 46, 0.2);
+  --anel-foco: 0 0 0 4px var(--cor-halo-foco);
+
+  /* ---------- Movimento ---------- */
+  --easing-padrao: cubic-bezier(0.32, 0.72, 0, 1);
+  --duracao-rapida: 120ms;
+  --duracao-padrao: 200ms;
+  --duracao-lenta: 320ms;
+
+  /* ---------- Breakpoints (referência para media query; QA.md §3) ---------- */
+  --bp-sm: 360px;
+  --bp-md: 768px;
+  --bp-lg: 1280px;
+
+  /* ---------- Z-index ---------- */
+  --z-barra-lateral: 20;
+  --z-topo: 30;
+  --z-overlay: 1000;
+  --z-toast: 1100;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duracao-rapida: 0ms;
+    --duracao-padrao: 0ms;
+    --duracao-lenta: 0ms;
+  }
+}
+
+/* Base global mínima — cada componente usa estilo encapsulado próprio;
+   isto só normaliza o documento. */
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--cor-fundo-pagina);
+  color: var(--cor-texto-primario);
+  font-family: var(--fonte-corpo);
+  font-size: var(--tipo-corpo-tam);
+  line-height: var(--tipo-corpo-altura);
+  -webkit-font-smoothing: antialiased;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:focus-visible {
+  outline: 2px solid var(--cor-borda-foco);
+  outline-offset: 2px;
+}

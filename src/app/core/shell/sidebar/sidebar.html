@@ -1,0 +1,26 @@
+<div class="marca">
+  <span class="marca__nome">{{ i18n.t('shell.marca') }}</span>
+  <span class="marca__subtitulo">{{ i18n.t('shell.subtitulo') }}</span>
+</div>
+
+<nav class="navegacao">
+  @for (grupo of grupos; track grupo.tituloChave) {
+    <div class="grupo">
+      <p class="grupo__titulo">{{ i18n.t(grupo.tituloChave) }}</p>
+      @for (item of grupo.itens; track item.rotuloChave) {
+        <a
+          class="item"
+          [routerLink]="item.rota"
+          [routerLinkActive]="item.implementado ? 'item--ativo' : ''"
+          [routerLinkActiveOptions]="{ exact: false }"
+        >
+          <mt-icon [nome]="item.icone" />
+          <span class="item__rotulo">{{ i18n.t(item.rotuloChave) }}</span>
+          @if (!item.implementado) {
+            <span class="item__selo" [title]="i18n.t('shell.painelClassico')">●</span>
+          }
+        </a>
+      }
+    </div>
+  }
+</nav>

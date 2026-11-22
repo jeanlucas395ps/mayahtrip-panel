@@ -1,0 +1,28 @@
+<div class="pagina__topo">
+  <h1 class="pagina__titulo">{{ i18n.t('relevantes.titulo') }}</h1>
+  <p class="pagina__subtitulo">{{ i18n.t('relevantes.subtitulo') }}</p>
+</div>
+
+<mt-card class="busca">
+  <div class="busca__caixa">
+    <input type="text" [value]="busca()" (input)="aoDigitar($any($event.target).value)" [placeholder]="i18n.t('relevantes.buscarPlaceholder')" />
+    @if (candidatos().length) {
+      <ul class="lista-candidatos">
+        @for (candidato of candidatos(); track candidato.id) {
+          <li>
+            <span>{{ candidato.name }}</span>
+            <mt-button variante="fantasma" (click)="adicionar(candidato)">{{ i18n.t('relevantes.adicionar') }}</mt-button>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</mt-card>
+
+<mt-card [semPadding]="true">
+  <mt-data-table [colunas]="colunas" [linhas]="relevantes()" [carregando]="carregando()" [tituloVazio]="i18n.t('relevantes.vazioTitulo')">
+    <ng-template #acoesLinha let-item>
+      <mt-button variante="perigo" (click)="remover(item)">{{ i18n.t('relevantes.remover') }}</mt-button>
+    </ng-template>
+  </mt-data-table>
+</mt-card>

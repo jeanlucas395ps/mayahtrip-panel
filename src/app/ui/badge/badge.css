@@ -1,0 +1,33 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-4);
+  height: 24px;
+  padding: 0 var(--esp-10);
+  border-radius: var(--raio-pilula);
+  font-size: var(--tipo-xs-tam);
+  font-weight: 700;
+  background: var(--cor-neutro-fundo);
+  color: var(--cor-neutro-texto);
+  white-space: nowrap;
+}
+
+:host(.mt-badge--sucesso) {
+  background: var(--cor-sucesso-fundo);
+  color: var(--cor-sucesso-texto);
+}
+
+:host(.mt-badge--erro) {
+  background: var(--cor-erro-fundo);
+  color: var(--cor-erro-texto);
+}
+
+:host(.mt-badge--aviso) {
+  background: var(--cor-aviso-fundo);
+  color: var(--cor-aviso-texto);
+}
+
+:host(.mt-badge--info) {
+  background: var(--cor-info-fundo);
+  color: var(--cor-info-texto);
+}

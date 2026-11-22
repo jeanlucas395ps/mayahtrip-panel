@@ -1,0 +1,8 @@
+<div class="confirmacao">
+  <h2 class="confirmacao__titulo">{{ dados.titulo }}</h2>
+  <p class="confirmacao__mensagem">{{ dados.mensagem }}</p>
+  <div class="confirmacao__acoes">
+    <mt-button variante="contorno" (click)="cancelar()">{{ dados.cancelarRotulo }}</mt-button>
+    <mt-button [variante]="dados.perigo ? 'perigo' : 'primario'" (click)="confirmar()">{{ dados.confirmarRotulo }}</mt-button>
+  </div>
+</div>

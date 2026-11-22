@@ -1,0 +1,18 @@
+<button
+  class="botao"
+  [class.botao--lg]="tamanho() === 'lg'"
+  [class.botao--primario]="variante() === 'primario'"
+  [class.botao--acento]="variante() === 'acento'"
+  [class.botao--contorno]="variante() === 'contorno'"
+  [class.botao--fantasma]="variante() === 'fantasma'"
+  [class.botao--perigo]="variante() === 'perigo'"
+  [class.botao--largo]="largoTotal()"
+  [class.botao--carregando]="carregando()"
+  [type]="tipo()"
+  [disabled]="desabilitado() || carregando()"
+>
+  @if (carregando()) {
+    <span class="botao__spinner" aria-hidden="true"></span>
+  }
+  <span class="botao__conteudo"><ng-content /></span>
+</button>
